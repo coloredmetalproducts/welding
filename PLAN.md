@@ -78,8 +78,12 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
   ceiling like the real one). **Built: 24'W × 10'H bay door, 27' off the front-right corner.**
 - **Man doors:** parametric, same system, with inswinging leaves.
   **Built: two 42" inswinging leaves (7'-0" total), 15' off the front-left corner.**
-- **Ramp** to the adjacent building: parametric slope/width/landing; stub of the neighboring
-  building wall so the connection reads correctly. (Dims TBD.)
+- **Ramp** to the adjacent building: parametric wall/offset/width/run/drop, rendered as a
+  wedge with the exterior grade dropping to meet it.
+  **Built: 7' wide, 12' run, 33" drop (23% grade), on the left end wall 5'-7" off the
+  cinderblock notch.**
+- **Unusable areas:** corner-anchored obstructions, solid to the roof in 3D and hatched on
+  the floor in plan. **Built: 6' × 9' cinderblock notch at the rear-left corner (54 sq ft).**
 - **Mezzanine:** parametric platform (footprint, deck height, stair location, railing).
   Clearance under it is honored by the placement system. (Dims TBD.)
 - Every TBD item flagged visually (hatched material) until real dimensions replace it.
@@ -153,7 +157,10 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 - [x] Front-wall man doors: 2 × 42" inswinging, 15' off the left corner (height 7'-0" assumed)
 - [ ] Any other garage/man doors on the rear or end walls?
 - [ ] Which compass direction does the front wall face?
-- [ ] Ramp: which wall, width, elevation change, length, landing; adjacent building position
+- [x] Ramp: left end wall, 7' wide, 12' run, 33" drop, 5'-7" off the cinderblock notch
+- [x] Cinderblock notch: rear-left corner, 6' off the left wall × 9' off the rear wall
+- [ ] Opening in the left end wall for the ramp — size and height?
+- [ ] Adjacent building position, and the grade at the front bay door
 - [ ] Mezzanine: footprint, deck height, stair location, what's under/on it
 - [ ] Real equipment list w/ measured footprints (brake, shear, ironworker, saw, cutting table, tables, welders)
 - [x] Rack spec: 20' wide × 5' deep, up to 12' tall, bays 4'–5' wide, holds 24' stock

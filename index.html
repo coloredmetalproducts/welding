@@ -27,6 +27,10 @@
       }
       #ui button:hover { background: #e2e9ef; }
       #ui button.active { background: #2c6e9e; border-color: #2c6e9e; color: #fff; }
+      #ui .row { display: flex; flex-wrap: wrap; gap: 5px; }
+      #ui .row button {
+        flex: 1 1 auto; width: auto; margin: 0; padding: 6px 8px; font-size: 12px;
+      }
       #ui .section {
         font-size: 11px; font-weight: 700; text-transform: uppercase;
         letter-spacing: 0.05em; color: #7b8792; margin: 12px 0 6px;
@@ -48,6 +52,8 @@
       <h1>Welding Shop Planner</h1>
       <div class="dims">48' × 105' &middot; 18' eave / 25' ridge</div>
       <button id="viewToggle">Switch to plan view</button>
+      <div class="section">View from</div>
+      <div class="row" id="viewPresets"></div>
       <div class="section">Doors</div>
       <div id="doorList"></div>
       <div class="hint" id="hint">

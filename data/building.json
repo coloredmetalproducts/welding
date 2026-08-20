@@ -1,6 +1,6 @@
 {
   "name": "Main Shop",
-  "comment": "All dimensions in FEET. X runs along the 105' length, Z along the 48' width, Y is up. The 'front' wall is at z=0. Opening offsets are measured from the named corner AS VIEWED FROM OUTSIDE facing that wall.",
+  "comment": "All dimensions in FEET. X runs along the 105' length, Z along the 48' width, Y is up. The 'front' wall is at z=0. Left/right are always AS SEEN FROM OUTSIDE facing the wall in question - so the left end wall is at x=105.",
   "length": 105,
   "width": 48,
   "eaveHeight": 18,
@@ -30,8 +30,33 @@
       "note": "Height 7'-0\" assumed - confirm."
     }
   ],
+  "obstructions": [
+    {
+      "id": "notch-rear-left",
+      "label": "Cinderblock notch",
+      "note": "Walled to the roof - inaccessible, unusable space",
+      "corner": "rearLeft",
+      "alongLength": 6,
+      "alongWidth": 9
+    }
+  ],
+  "ramps": [
+    {
+      "id": "ramp-left",
+      "label": "Ramp to adjacent building",
+      "note": "Run is the floor measurement, not the slope length",
+      "wall": "leftEnd",
+      "fromCorner": "left",
+      "offset": 14.5833,
+      "offsetComment": "9' cinderblock notch + 5'-7\", measured from the rear (left) corner of the left end wall",
+      "width": 7,
+      "run": 12,
+      "drop": 2.75
+    }
+  ],
   "tbd": {
-    "ramp": "wall, width, slope, adjacent building position",
-    "mezzanine": "footprint, deck height, stair location"
+    "mezzanine": "footprint, deck height, stair location",
+    "rampOpening": "the ramp implies an opening in the left end wall - size not yet given",
+    "grade": "exterior grade assumed 33\" below the slab on the ramp side only"
   }
 }

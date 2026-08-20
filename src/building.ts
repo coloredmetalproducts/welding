@@ -3,6 +3,9 @@ import type { BuildingSpec, WallId } from './types';
 import { resolveOpening, wallFrames, wallGeometry, type ResolvedOpening } from './walls';
 import { makeManDoor, makeOverheadDoor, type DoorBuild, type DoorControl } from './doors';
 import { makeDoorAnnotations } from './doorMarkers';
+import { buildObstruction, type Footprint } from './obstructions';
+import { buildRamp } from './ramp';
+import { formatFeet } from './labels';
 
 /** A surface that fades out when the camera moves to its outside. */
 export interface FadePanel {
@@ -11,11 +14,13 @@ export interface FadePanel {
   point: THREE.Vector3;
 }
 
-/** An opening the pointer can hover, to reveal its dimensions on demand. */
-export interface DoorHoverTarget {
-  opening: ResolvedOpening;
+/** Anything the pointer can hover to reveal its dimensions on demand. */
+export interface HoverTarget {
   /** Invisible proxy volume the raycaster tests against. */
   mesh: THREE.Mesh;
+  title: string;
+  lines: string[];
+  note?: string;
   setHighlight(on: boolean): void;
 }
 
@@ -23,16 +28,25 @@ export interface BuildingModel {
   group: THREE.Group;
   fadePanels: FadePanel[];
   doors: DoorControl[];
-  /** Door leaf/jamb groups, hidden in plan view so floor symbols read cleanly. */
-  doorGroups: THREE.Group[];
+  /** Solid masses swapped for floor symbols in plan view. */
+  planHiddenGroups: THREE.Object3D[];
   openings: ResolvedOpening[];
-  hoverTargets: DoorHoverTarget[];
+  /** Unusable floor areas, for placement checks later. */
+  blockedFootprints: Footprint[];
+  hoverTargets: HoverTarget[];
 }
 
 const WALL_COLOR = 0xe3e8ec;
 const ROOF_COLOR = 0xb6bfc7;
 const SLAB_COLOR = 0xcfceca;
 const EDGE_COLOR = 0x46525d;
+
+const WALL_NAMES: Record<WallId, string> = {
+  front: 'front wall',
+  rear: 'rear wall',
+  leftEnd: 'left end wall',
+  rightEnd: 'right end wall',
+};
 
 function panelMaterial(color: number): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
@@ -69,14 +83,23 @@ function quadGeometry(
   return geo;
 }
 
+/** Invisible volume used purely as a raycast target for hover callouts. */
+function hoverProxy(width: number, height: number, depth: number): THREE.Mesh {
+  return new THREE.Mesh(
+    new THREE.BoxGeometry(width, height, depth),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
+  );
+}
+
 export function buildBuilding(spec: BuildingSpec): BuildingModel {
   const { length: L, width: W, eaveHeight: eave, ridgeHeight: ridge } = spec;
   const group = new THREE.Group();
   const fadePanels: FadePanel[] = [];
   const doors: DoorControl[] = [];
-  const doorGroups: THREE.Group[] = [];
+  const planHiddenGroups: THREE.Object3D[] = [];
   const allOpenings: ResolvedOpening[] = [];
-  const hoverTargets: DoorHoverTarget[] = [];
+  const blockedFootprints: Footprint[] = [];
+  const hoverTargets: HoverTarget[] = [];
   const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 
   const addFading = (
@@ -95,12 +118,14 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     });
   };
 
-  // Slab: top surface at y=0.
+  // Slab. It runs deep enough to meet the lower exterior grade the ramp lands on,
+  // so the foundation reads as a wall rather than a floating edge.
+  const slabDepth = Math.max(0.5, ...(spec.ramps ?? []).map((r) => r.drop));
   const slab = new THREE.Mesh(
-    new THREE.BoxGeometry(L, 0.5, W),
+    new THREE.BoxGeometry(L, slabDepth, W),
     new THREE.MeshStandardMaterial({ color: SLAB_COLOR, roughness: 0.95 }),
   );
-  slab.position.set(L / 2, -0.25, W / 2);
+  slab.position.set(L / 2, -slabDepth / 2, W / 2);
   slab.receiveShadow = true;
   group.add(slab);
 
@@ -117,38 +142,75 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     const wallCenter = new THREE.Vector3(frame.span / 2, midHeight, 0).applyMatrix4(
       frame.matrix,
     );
-    addFading(
-      wallGeometry(spec, frame, openings),
-      WALL_COLOR,
-      frame.outward,
-      wallCenter,
-    );
+    addFading(wallGeometry(spec, frame, openings), WALL_COLOR, frame.outward, wallCenter);
 
     for (const op of openings) {
+      // Doors deliberately stay opaque while their wall ghosts out: looking in
+      // from outside, the openings are exactly what we're here to review.
       const built: DoorBuild =
         op.kind === 'overhead' ? makeOverheadDoor(op, frame) : makeManDoor(op, frame);
       group.add(built.group);
       doors.push(built.control);
-      doorGroups.push(built.group);
+      planHiddenGroups.push(built.group);
 
       const annotations = makeDoorAnnotations(op, frame);
       group.add(annotations.group);
 
-      // Invisible slab straddling the opening. Hovering it reveals the door's
-      // dimensions; it has real depth so it can also be hit from straight above
-      // in plan view, where the wall itself is edge-on.
+      // The proxy has real depth so it can also be hit from straight above in
+      // plan view, where the wall itself is edge-on.
       const proxyHolder = new THREE.Group();
-      const proxy = new THREE.Mesh(
-        new THREE.BoxGeometry(op.width, op.height, 4),
-        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
-      );
+      const proxy = hoverProxy(op.width, op.height, 4);
       proxy.position.set((op.uStart + op.uEnd) / 2, op.height / 2, 0);
       proxyHolder.add(proxy);
       proxyHolder.applyMatrix4(frame.matrix);
       group.add(proxyHolder);
 
-      hoverTargets.push({ opening: op, mesh: proxy, setHighlight: annotations.setHighlight });
+      hoverTargets.push({
+        mesh: proxy,
+        title: op.label,
+        lines: [
+          `${formatFeet(op.width)} W × ${formatFeet(op.height)} H`,
+          `${formatFeet(op.offset)} off the ${op.fromCorner} corner`,
+        ],
+        note: `${WALL_NAMES[op.wall]} · measured from outside`,
+        setHighlight: annotations.setHighlight,
+      });
     }
+  }
+
+  // Walled-off corners. Solid to the roof in 3D, hatched floor patch in plan.
+  for (const ob of spec.obstructions ?? []) {
+    const built = buildObstruction(spec, ob);
+    group.add(built.solid, built.symbol, built.hoverMesh);
+    planHiddenGroups.push(built.solid);
+    blockedFootprints.push(built.footprint);
+    hoverTargets.push({
+      mesh: built.hoverMesh,
+      title: ob.label,
+      lines: [
+        `${formatFeet(ob.alongLength)} × ${formatFeet(ob.alongWidth)} footprint`,
+        `${ob.alongLength * ob.alongWidth} sq ft of floor lost`,
+        'Full height to the roof',
+      ],
+      note: ob.note,
+      setHighlight: built.setHighlight,
+    });
+  }
+
+  // Exterior ramps.
+  for (const ramp of spec.ramps ?? []) {
+    const built = buildRamp(spec, ramp);
+    group.add(built.group);
+    hoverTargets.push({
+      mesh: built.hoverMesh,
+      title: ramp.label,
+      lines: [
+        `${formatFeet(ramp.width)} wide · ${formatFeet(ramp.run)} run`,
+        `${formatFeet(ramp.drop)} drop · ${built.gradePercent.toFixed(0)}% grade`,
+      ],
+      note: ramp.note,
+      setHighlight: built.setHighlight,
+    });
   }
 
   // Roof panes from each eave up to the ridge (ridge runs along X at z = W/2).
@@ -166,7 +228,15 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     v(L / 2, (eave + ridge) / 2, (3 * W) / 4),
   );
 
-  return { group, fadePanels, doors, doorGroups, openings: allOpenings, hoverTargets };
+  return {
+    group,
+    fadePanels,
+    doors,
+    planHiddenGroups,
+    openings: allOpenings,
+    blockedFootprints,
+    hoverTargets,
+  };
 }
 
 /**

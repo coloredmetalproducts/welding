@@ -4,8 +4,8 @@ Interactive 3D space-planning model of our 48' × 105' welding/fab shop building
 Drag equipment around, save layout scenarios, and simulate forklift material flow
 (including 24' stock) to test workflows before we move anything real.
 
-**Status:** Phase 1 (shell) done; Phase 2 in progress (front-wall doors built; ramp and
-mezzanine pending dimensions). See [PLAN.md](PLAN.md) for the phased build plan.
+**Status:** Phase 1 (shell) done; Phase 2 in progress (doors, ramp, and the cinderblock
+notch built; mezzanine pending dimensions). See [PLAN.md](PLAN.md) for the phased build plan.
 
 ## Running it
 
@@ -16,7 +16,8 @@ npm run build    # production build in dist/
 ```
 
 Controls: left-drag orbits, right-drag pans, scroll zooms. Press **P** (or use the
-button) to toggle the top-down plan view. Walls and roof automatically fade when
+button) to toggle the top-down plan view, and use the **View from** buttons to jump to a
+standard elevation. Walls and roof automatically fade when
 the camera is outside them so the interior stays visible.
 
 ## Dimensions
@@ -29,7 +30,7 @@ the tape was pulled from, and the `offset` to the near edge. **Corners are named
 from outside, facing that wall** — the 3D view labels the front wall and both its corners
 so the convention is checkable at a glance.
 
-**Hover any door** — in either view — to see its size and the corner it was measured from.
+**Hover any door, ramp, or blocked area** — in either view — to see its size and the corner it was measured from.
 The hovered opening highlights so it's clear which one the numbers belong to.
 
 Doors can be opened and closed from the panel. In plan view the leaves are hidden and

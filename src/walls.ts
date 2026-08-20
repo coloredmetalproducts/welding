@@ -47,8 +47,8 @@ export function wallFrames(spec: BuildingSpec): Record<WallId, WallFrame> {
   return {
     front: makeFrame('front', v(0, 0, 0), v(1, 0, 0), v(0, 0, -1), L),
     rear: makeFrame('rear', v(L, 0, W), v(-1, 0, 0), v(0, 0, 1), L),
-    leftEnd: makeFrame('leftEnd', v(0, 0, W), v(0, 0, -1), v(-1, 0, 0), W),
-    rightEnd: makeFrame('rightEnd', v(L, 0, 0), v(0, 0, 1), v(1, 0, 0), W),
+    rightEnd: makeFrame('rightEnd', v(0, 0, W), v(0, 0, -1), v(-1, 0, 0), W),
+    leftEnd: makeFrame('leftEnd', v(L, 0, 0), v(0, 0, 1), v(1, 0, 0), W),
   };
 }
 

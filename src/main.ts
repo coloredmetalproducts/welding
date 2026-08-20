@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import buildingData from '../data/building.json';
 import { buildBuilding, updatePanelFades } from './building';
 import { makeFloorGrid } from './grid';
-import { formatFeet, makeTextSprite } from './labels';
+import { makeTextSprite } from './labels';
 import type { BuildingSpec } from './types';
 
 // JSON widens string literals, so the spec shape is asserted at the boundary.
@@ -41,15 +41,44 @@ sun.shadow.camera.far = 300;
 sun.target.position.copy(center);
 scene.add(sun, sun.target);
 
-// Surrounding ground (slab top sits at y=0, slab is 6" thick).
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(3000, 3000),
-  new THREE.MeshStandardMaterial({ color: 0x9aa08d, roughness: 1 }),
-);
-ground.rotation.x = -Math.PI / 2;
-ground.position.set(center.x, -0.5, center.z);
-ground.receiveShadow = true;
-scene.add(ground);
+// Exterior grade. The ramp tells us the ground past its wall sits below the
+// slab, so the ground is split into two levels with a face at the break rather
+// than left as one plane the ramp would sink through.
+const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x9aa08d, roughness: 1 });
+const rampDrop = Math.max(0, ...(spec.ramps ?? []).map((r) => r.drop));
+const REACH = 1200;
+
+function addGround(
+  xFrom: number,
+  xTo: number,
+  zFrom: number,
+  zTo: number,
+  y: number,
+): void {
+  const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(xTo - xFrom, zTo - zFrom),
+    groundMaterial,
+  );
+  plane.rotation.x = -Math.PI / 2;
+  plane.position.set((xFrom + xTo) / 2, y, (zFrom + zTo) / 2);
+  plane.receiveShadow = true;
+  scene.add(plane);
+}
+
+if (rampDrop > 0.5) {
+  // The left end wall is at x = L, so everything past it drops by the ramp fall.
+  addGround(-REACH, L, -REACH, REACH, -0.5);
+  addGround(L, REACH, -REACH, REACH, -rampDrop);
+  const breakFace = new THREE.Mesh(
+    new THREE.PlaneGeometry(2 * REACH, rampDrop - 0.5),
+    groundMaterial,
+  );
+  breakFace.position.set(L, -(0.5 + rampDrop) / 2, 0);
+  breakFace.rotation.y = Math.PI / 2;
+  scene.add(breakFace);
+} else {
+  addGround(-REACH, REACH, -REACH, REACH, -0.5);
+}
 
 const building = buildBuilding(spec);
 scene.add(building.group);
@@ -136,7 +165,7 @@ function setPlanView(on: boolean): void {
   planControls.enabled = on;
   viewToggle.textContent = on ? 'Switch to 3D view' : 'Switch to plan view';
   viewToggle.classList.toggle('active', on);
-  for (const doorGroup of building.doorGroups) doorGroup.visible = !on;
+  for (const solid of building.planHiddenGroups) solid.visible = !on;
   clearHover();
   hint.innerHTML = on
     ? 'Drag: pan &middot; Scroll: zoom'
@@ -146,6 +175,29 @@ viewToggle.addEventListener('click', () => setPlanView(!planView));
 window.addEventListener('keydown', (e) => {
   if (e.key.toLowerCase() === 'p' && !e.metaKey && !e.ctrlKey) setPlanView(!planView);
 });
+
+// ------------------------------------------------------------ view presets
+// Standard elevations, so a given wall can be inspected without hunting for
+// the angle by hand.
+const PRESETS: Array<[string, THREE.Vector3]> = [
+  ['Iso', new THREE.Vector3(L * 0.28, 52, -82)],
+  ['Front', new THREE.Vector3(L / 2, 26, -78)],
+  ['Left', new THREE.Vector3(L + 74, 30, W / 2)],
+  ['Rear', new THREE.Vector3(L / 2, 26, W + 78)],
+  ['Right', new THREE.Vector3(-74, 30, W / 2)],
+];
+const presetRow = document.getElementById('viewPresets')!;
+for (const [name, position] of PRESETS) {
+  const button = document.createElement('button');
+  button.textContent = name;
+  button.addEventListener('click', () => {
+    if (planView) setPlanView(false);
+    perspCamera.position.copy(position);
+    orbit.target.copy(center);
+    orbit.update();
+  });
+  presetRow.appendChild(button);
+}
 
 // ------------------------------------------------------------- door toggles
 const doorList = document.getElementById('doorList')!;
@@ -170,12 +222,6 @@ const tooltip = document.getElementById('tooltip')!;
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 const hoverMeshes = building.hoverTargets.map((target) => target.mesh);
-const WALL_NAMES: Record<string, string> = {
-  front: 'front wall',
-  rear: 'rear wall',
-  leftEnd: 'left end wall',
-  rightEnd: 'right end wall',
-};
 
 let hovered: (typeof building.hoverTargets)[number] | null = null;
 let dragging = false;
@@ -205,12 +251,10 @@ function updateHover(event: PointerEvent): void {
     return;
   }
 
-  const op = target.opening;
   tooltip.innerHTML = [
-    `<strong>${op.label}</strong>`,
-    `${formatFeet(op.width)} W &times; ${formatFeet(op.height)} H`,
-    `${formatFeet(op.offset)} off the ${op.fromCorner} corner`,
-    `<span class="muted">${WALL_NAMES[op.wall] ?? op.wall} &middot; measured from outside</span>`,
+    `<strong>${target.title}</strong>`,
+    ...target.lines,
+    ...(target.note ? [`<span class="muted">${target.note}</span>`] : []),
   ].join('<br />');
   tooltip.style.display = 'block';
 
