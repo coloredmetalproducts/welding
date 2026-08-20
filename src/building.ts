@@ -20,7 +20,13 @@ import { buildRamp } from './ramp';
 import { buildMezzanine } from './mezzanine';
 import { buildExteriorWork } from './exterior';
 import { buildFootprint, type Footprint } from './footprint';
-import { clipPolygonByAxis, roofHeightAt, type PlanPoint, type Rect } from './geometry';
+import {
+  clipPolygonByAxis,
+  gradeDropAt,
+  roofHeightAt,
+  type PlanPoint,
+  type Rect,
+} from './geometry';
 import { formatFeet } from './labels';
 
 /** A surface that fades out when the camera moves to its outside. */
@@ -55,6 +61,11 @@ export interface SiteQuery {
   headroomAt(x: number, z: number): number;
   /** Sloped floor - drivable, but not somewhere to stand a machine. */
   isSloped(x: number, z: number): boolean;
+  /**
+   * Height of the drivable surface: a ramp deck or exterior slab where there is
+   * one, the slab inside, and the exterior grade beyond.
+   */
+  surfaceHeightAt(x: number, z: number): number;
 }
 
 export interface BuildingModel {
@@ -160,6 +171,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
   const allOpenings: ResolvedOpening[] = [];
   const blockedFootprints: Rect[] = [];
   const rampFootprints: Rect[] = [];
+  const surfaces: Array<{ rect: Rect; heightAt: (x: number, z: number) => number }> = [];
   const mezzanineFootprints: Rect[] = [];
   const mezzanineZones: Array<{ rect: Rect; clearHeight: number }> = [];
   const hoverTargets: HoverTarget[] = [];
@@ -282,6 +294,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     const built = buildRamp(spec, ramp);
     group.add(built.group);
     rampFootprints.push(built.footprint);
+    surfaces.push({ rect: built.footprint, heightAt: built.heightAt });
     hoverTargets.push({
       mesh: built.hoverMesh,
       title: ramp.label,
@@ -322,6 +335,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
   for (const work of spec.exterior ?? []) {
     const built = buildExteriorWork(spec, work);
     group.add(built.group);
+    surfaces.push({ rect: built.footprint, heightAt: built.heightAt });
     hoverTargets.push({
       mesh: built.hoverMesh,
       title: work.label,
@@ -386,6 +400,12 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
         if (within(zone.rect, x, z)) return zone.clearHeight;
       }
       return roofHeightAt(spec, z);
+    },
+    surfaceHeightAt(x, z) {
+      for (const surface of surfaces) {
+        if (within(surface.rect, x, z)) return surface.heightAt(x, z);
+      }
+      return site.isInside(x, z) ? 0 : -gradeDropAt(spec, x, z);
     },
   };
 

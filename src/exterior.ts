@@ -20,6 +20,8 @@ export interface ExteriorBuild {
   /** Fall from the near edge to the far edge, negative when it drops. */
   fall: number;
   gradePercent: number;
+  /** Surface height at a point, for anything driving over it. */
+  heightAt(x: number, z: number): number;
 }
 
 export function buildExteriorWork(spec: BuildingSpec, work: ExteriorWork): ExteriorBuild {
@@ -103,11 +105,20 @@ export function buildExteriorWork(spec: BuildingSpec, work: ExteriorWork): Exter
   group.applyMatrix4(frame.matrix);
 
   const fall = work.topAtFar - work.topAtWall;
+  const toLocal = frame.matrix.clone().invert();
+  const probe = new THREE.Vector3();
+
   return {
     group,
     hoverMesh,
     footprint,
     fall,
+    heightAt(x, z) {
+      // The slab runs outward from the wall, which is negative wall-local z.
+      probe.set(x, 0, z).applyMatrix4(toLocal);
+      const t = Math.max(0, Math.min(1, -probe.z / work.depth));
+      return work.topAtWall + fall * t;
+    },
     gradePercent: work.depth > 0 ? (Math.abs(fall) / work.depth) * 100 : 0,
     setHighlight(on: boolean) {
       outlineMaterial.color.setHex(on ? HIGHLIGHT_COLOR : OUTLINE_COLOR);

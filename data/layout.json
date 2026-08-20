@@ -7,6 +7,12 @@
       "x": 45,
       "z": 42,
       "rotation": 0
+    },
+    {
+      "catalogId": "forklift",
+      "x": 40,
+      "z": 14,
+      "rotation": 90
     }
   ]
 }

@@ -67,16 +67,23 @@
       <div class="section">View from</div>
       <div class="row" id="viewPresets"></div>
       <button id="labelToggle">Hide dimensions and labels</button>
+      <div class="section">Forklift path</div>
+      <div class="row">
+        <button id="pathDraw">Draw path</button>
+        <button id="pathPlay">Play</button>
+        <button id="pathClear">Clear</button>
+      </div>
+      <div class="hint" id="pathHint">No path yet</div>
       <div class="hint" id="hint">
         Left-drag: orbit &middot; Right-drag: pan<br />Scroll: zoom
       </div>
       <div class="hint">
         Hover anything for dimensions &middot; click a door to open it<br />
-        Drag equipment to move &middot; <b>R</b> rotate 90&deg; &middot; <b>Shift+R</b> 15&deg;
+        Drag equipment to move &middot; <b>R</b> rotate 90&deg; &middot; <b>Shift+R</b> 15&deg;<br />
+        Select the forklift and drive it with the <b>arrow keys</b>
       </div>
     </div>
     <div id="selection"></div>
-    </div>
     <div id="tooltip"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

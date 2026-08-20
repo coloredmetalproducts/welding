@@ -123,9 +123,25 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 - Placement is checked against the building continuously: outside the walls, over unusable
   floor, on a ramp, or under too little headroom all flag in the selection panel, and the
   machine itself tints red.
-- **Built: Marvel Series 81 band saw** — 5' × 8' × 7', with 24' of clearance each end.
+- **Feed axis is explicit per machine**, not inferred from the shape — plenty of machines are
+  fed across their short side, as the Marvel is.
+- **Built: Marvel Series 81 band saw** — 5' × 8' × 7', fed through the 5' side, 24' clearance
+  each end (a 53' × 8' envelope).
+- **Built: forklift** — 4' × 12' × 7', drivable.
 
 Still to do: palette to add items, duplicate, delete, per-item clearance halos.
+
+### Phase 5 — Forklift movement — *started early*
+
+- **Arrow-key driving:** select the forklift and drive it. Up/down move along its heading,
+  left/right steer. It sits on whatever surface is under it and pitches to the slope, so it
+  visibly climbs the ramps and rolls out onto the dock.
+- **Draw a path and play it:** click *Draw path*, click points on the floor, then *Play*. The
+  truck tracks the line at a constant speed and eases round corners rather than snapping.
+- Warnings are mobility-aware: a forklift is *meant* to leave the building and climb ramps, so
+  it isn't flagged for either — but low headroom and blocked floor still are.
+
+Still to do: the 24' load on the forks, the swept envelope, and collision reporting.
 
 Starter catalog (dims are typical placeholders — we'll true them up to your actual iron):
 

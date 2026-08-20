@@ -5,7 +5,8 @@ import { buildBuilding, updatePanelFades, type HoverTarget } from './building';
 import { makeFloorGrid } from './grid';
 import { formatFeet, makeTextSprite } from './labels';
 import { gradeDropAt } from './geometry';
-import { buildPlacement, type Placement } from './equipment';
+import { buildPlacement, feedFootprint, type Placement } from './equipment';
+import { createTravelPath } from './path';
 import catalogData from '../data/catalog.json';
 import layoutData from '../data/layout.json';
 import type { Catalog, Layout } from './types';
@@ -260,6 +261,9 @@ function describe(placement: Placement): string {
   return [
     `<strong>${def.label}</strong>`,
     `${formatFeet(def.width)} × ${formatFeet(def.length)} × ${formatFeet(def.height)} tall`,
+    ...(def.clearance
+      ? [`Feeds through the ${formatFeet(feedFootprint(def).along)} side`]
+      : []),
     `Rotated ${Math.round(placed.rotation)}°`,
     ...(def.clearance ? [`<span class="muted">${def.clearance.label}</span>`] : []),
     ...problems.map((p) => `<span class="warn">${p}</span>`),
@@ -289,6 +293,114 @@ window.addEventListener('keydown', (event) => {
   if (event.key.toLowerCase() !== 'r' || event.metaKey || event.ctrlKey) return;
   rotateSelected(event.shiftKey ? 15 : 90);
 });
+
+// ------------------------------------------------------- driving and paths
+// Arrow keys drive whatever driven machine is selected. Held keys are tracked
+// and applied in the render loop so motion is smooth and frame-rate independent.
+const DRIVE_SPEED = 7;
+const TURN_SPEED = 75;
+const held = new Set<string>();
+const ARROWS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
+window.addEventListener('keydown', (event) => {
+  if (!ARROWS.includes(event.key)) return;
+  if (!selected || selected.catalog.mobility !== 'driven') return;
+  event.preventDefault();
+  held.add(event.key);
+});
+window.addEventListener('keyup', (event) => held.delete(event.key));
+window.addEventListener('blur', () => held.clear());
+
+function driveSelected(dt: number): void {
+  if (!selected || selected.catalog.mobility !== 'driven' || held.size === 0) return;
+  const item = selected.placed;
+  let rotation = item.rotation;
+  if (held.has('ArrowLeft')) rotation += TURN_SPEED * dt;
+  if (held.has('ArrowRight')) rotation -= TURN_SPEED * dt;
+
+  let step = 0;
+  if (held.has('ArrowUp')) step += DRIVE_SPEED * dt;
+  if (held.has('ArrowDown')) step -= DRIVE_SPEED * dt;
+  const yaw = THREE.MathUtils.degToRad(rotation);
+  selected.setPose(item.x + Math.cos(yaw) * step, item.z - Math.sin(yaw) * step, rotation);
+  selectionPanel.innerHTML = describe(selected);
+}
+
+const forklift = placements.find((p) => p.catalog.mobility === 'driven');
+const travelPath = createTravelPath(building.site);
+scene.add(travelPath.group);
+
+const pathDraw = document.getElementById('pathDraw') as HTMLButtonElement;
+const pathPlay = document.getElementById('pathPlay') as HTMLButtonElement;
+const pathClear = document.getElementById('pathClear') as HTMLButtonElement;
+const pathHint = document.getElementById('pathHint')!;
+
+let drawing = false;
+let playing = false;
+let travelled = 0;
+let playHeading = 0;
+
+function refreshPathUi(): void {
+  pathDraw.textContent = drawing ? 'Done drawing' : 'Draw path';
+  pathDraw.classList.toggle('active', drawing);
+  pathPlay.textContent = playing ? 'Stop' : 'Play';
+  pathPlay.classList.toggle('active', playing);
+  pathPlay.disabled = travelPath.count() < 2;
+  pathHint.textContent = drawing
+    ? `Click the floor to add points (${travelPath.count()} so far)`
+    : travelPath.count() < 2
+      ? 'No path yet'
+      : `${travelPath.count()} points · ${formatFeet(travelPath.totalLength())} long`;
+}
+
+pathDraw.addEventListener('click', () => {
+  drawing = !drawing;
+  if (drawing) {
+    playing = false;
+    select(forklift ?? null);
+  }
+  refreshPathUi();
+});
+pathClear.addEventListener('click', () => {
+  travelPath.clear();
+  playing = false;
+  drawing = false;
+  refreshPathUi();
+});
+pathPlay.addEventListener('click', () => {
+  if (travelPath.count() < 2 || !forklift) return;
+  playing = !playing;
+  if (playing) {
+    drawing = false;
+    travelled = 0;
+    const start = travelPath.sample(0);
+    if (start) {
+      playHeading = start.heading;
+      forklift.setPose(start.x, start.z, THREE.MathUtils.radToDeg(start.heading));
+    }
+  }
+  refreshPathUi();
+});
+
+function advancePlayback(dt: number): void {
+  if (!playing || !forklift) return;
+  travelled += DRIVE_SPEED * dt;
+  const total = travelPath.totalLength();
+  const at = travelPath.sample(Math.min(travelled, total));
+  if (!at) return;
+  // Ease the heading round rather than snapping at each corner, so a turn looks
+  // like a turn.
+  let delta = at.heading - playHeading;
+  while (delta > Math.PI) delta -= Math.PI * 2;
+  while (delta < -Math.PI) delta += Math.PI * 2;
+  playHeading += delta * Math.min(1, dt * 6);
+  forklift.setPose(at.x, at.z, THREE.MathUtils.radToDeg(playHeading));
+  selectionPanel.innerHTML = describe(forklift);
+  if (travelled >= total) {
+    playing = false;
+    refreshPathUi();
+  }
+}
 
 // Dragging happens on the floor plane, which works the same under the
 // perspective and orthographic cameras.
@@ -440,7 +552,15 @@ window.addEventListener('pointerup', (event) => {
   if (pressed) {
     const moved = Math.hypot(event.clientX - pressed.x, event.clientY - pressed.y);
     if (moved < 5) {
-      if (pressed.target?.activate) pressed.target.activate();
+      if (drawing && event.target === renderer.domElement) {
+        setPointer(event as PointerEvent);
+        raycaster.setFromCamera(pointer, planView ? planCamera : perspCamera);
+        const hit = floorUnderPointer();
+        if (hit) {
+          travelPath.addPoint(hit.x, hit.z);
+          refreshPathUi();
+        }
+      } else if (pressed.target?.activate) pressed.target.activate();
       else if (!pressed.target) select(null);
     }
   }
@@ -459,7 +579,14 @@ window.addEventListener('resize', () => {
 
 // -------------------------------------------------------------------- loop
 const cameraWorldPos = new THREE.Vector3();
+const clock = new THREE.Clock();
+refreshPathUi();
+
 renderer.setAnimationLoop(() => {
+  // Clamped so a backgrounded tab does not teleport anything on the next frame.
+  const dt = Math.min(0.1, clock.getDelta());
+  driveSelected(dt);
+  advancePlayback(dt);
   const camera = planView ? planCamera : perspCamera;
   (planView ? planControls : orbit).update();
   for (const door of building.doors) door.tick();

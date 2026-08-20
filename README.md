@@ -61,6 +61,10 @@ a dashed working-clearance envelope off its feed axis; it turns red when the cle
 fitting, and the selection panel says why. Equipment lives in
 [`data/catalog.json`](data/catalog.json), placements in [`data/layout.json`](data/layout.json).
 
+**Select the forklift and drive it with the arrow keys** — it follows the surface underneath
+and pitches to the slope, so it climbs the ramps. Or click **Draw path**, click points on the
+floor, and hit **Play** to watch it run the route.
+
 **Click a door to open or close it.** In plan view the leaves are hidden and
 each opening shows as an architectural floor symbol: a threshold band, approach lines for
 the overhead door, and swing arcs for the hinged leaves.

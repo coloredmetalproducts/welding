@@ -19,6 +19,8 @@ export interface RampBuild {
   /** Rise over run as a percentage, for the callout. */
   gradePercent: number;
   footprint: Rect;
+  /** Deck height at a point on the ramp, for anything driving over it. */
+  heightAt(x: number, z: number): number;
 }
 
 export function buildRamp(spec: BuildingSpec, ramp: Ramp): RampBuild {
@@ -93,10 +95,19 @@ export function buildRamp(spec: BuildingSpec, ramp: Ramp): RampBuild {
   const xs = corners.map((c) => c.x);
   const zs = corners.map((c) => c.z);
 
+  const toLocal = frame.matrix.clone().invert();
+  const probe = new THREE.Vector3();
+
   return {
     group,
     hoverMesh,
     gradePercent: (ramp.rise / ramp.run) * 100,
+    heightAt(x, z) {
+      // Wall-local z is the inward distance: full rise at the wall, zero inboard.
+      probe.set(x, 0, z).applyMatrix4(toLocal);
+      const t = Math.max(0, Math.min(1, probe.z / ramp.run));
+      return ramp.rise * (1 - t);
+    },
     footprint: {
       x0: Math.min(...xs),
       x1: Math.max(...xs),

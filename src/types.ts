@@ -122,11 +122,17 @@ export interface CatalogItem {
   id: string;
   label: string;
   note?: string;
-  /** Across the feed axis. */
+  /** Footprint as the machine is normally described, not as it feeds. */
   width: number;
-  /** Along the feed axis - material runs this way through the machine. */
   length: number;
   height: number;
+  /**
+   * Which footprint dimension material travels along. Plenty of machines are
+   * fed across their short side, so this can't be inferred from the shape.
+   */
+  feedAxis: 'width' | 'length';
+  /** How to mass it in 3D. Defaults to a generic machine block. */
+  shape?: 'machine' | 'forklift';
   color: string;
   mobility: 'fixed' | 'rolling' | 'driven';
   /**
@@ -142,7 +148,7 @@ export interface PlacedItem {
   /** Centre of the footprint, in world feet. */
   x: number;
   z: number;
-  /** Rotation about vertical, in degrees. 0 puts the feed axis along X. */
+  /** Rotation about vertical, in degrees. 0 runs the feed axis along X, the building's length. */
   rotation: number;
 }
 

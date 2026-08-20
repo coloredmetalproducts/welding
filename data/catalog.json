@@ -4,7 +4,7 @@
     {
       "id": "band-saw",
       "label": "Marvel Series 81 band saw",
-      "note": "Marvel 81 / M2 / M3 series - vertical tilt-frame saw. Footprint is the rough 5' x 8' x 7' given, not a spec sheet. The frame tilts for mitres, which needs its own side clearance - not modelled yet.",
+      "note": "Marvel 81 / M2 / M3 series - vertical tilt-frame saw. Material feeds through the 5' side, so the 8' dimension runs across the material path. Footprint is the rough figure given, not a spec sheet. The frame tilts for mitres, which needs its own side clearance - not modelled yet.",
       "width": 5,
       "length": 8,
       "height": 7,
@@ -13,7 +13,21 @@
       "clearance": {
         "eachEnd": 24,
         "label": "24' each end to cut 24' stock"
-      }
+      },
+      "feedAxis": "width",
+      "shape": "machine"
+    },
+    {
+      "id": "forklift",
+      "label": "Forklift",
+      "note": "Counterbalance truck. Length includes the forks; height is the mast lowered. Travel paths come in Phase 5.",
+      "width": 4,
+      "length": 12,
+      "height": 7,
+      "feedAxis": "length",
+      "shape": "forklift",
+      "color": "#c08a2e",
+      "mobility": "driven"
     }
   ]
 }
