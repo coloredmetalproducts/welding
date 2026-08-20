@@ -31,6 +31,14 @@
         font-size: 11px; font-weight: 700; text-transform: uppercase;
         letter-spacing: 0.05em; color: #7b8792; margin: 12px 0 6px;
       }
+      #tooltip {
+        position: fixed; z-index: 20; display: none; pointer-events: none;
+        background: rgba(28, 37, 45, 0.94); color: #f2f5f7;
+        border-radius: 7px; padding: 8px 11px;
+        font-size: 12px; line-height: 1.55; white-space: nowrap;
+        box-shadow: 0 4px 14px rgba(20, 28, 35, 0.3);
+      }
+      #tooltip .muted { color: #9fadb8; font-size: 11px; }
       #ui .hint { font-size: 11px; color: #7b8792; line-height: 1.5; margin-top: 4px; }
     </style>
   </head>
@@ -46,6 +54,7 @@
         Left-drag: orbit &middot; Right-drag: pan<br />Scroll: zoom
       </div>
     </div>
+    <div id="tooltip"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

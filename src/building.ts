@@ -2,13 +2,21 @@ import * as THREE from 'three';
 import type { BuildingSpec, WallId } from './types';
 import { resolveOpening, wallFrames, wallGeometry, type ResolvedOpening } from './walls';
 import { makeManDoor, makeOverheadDoor, type DoorBuild, type DoorControl } from './doors';
-import { makeDoorMarkers } from './doorMarkers';
+import { makeDoorAnnotations } from './doorMarkers';
 
 /** A surface that fades out when the camera moves to its outside. */
 export interface FadePanel {
   materials: THREE.Material[];
   outwardNormal: THREE.Vector3;
   point: THREE.Vector3;
+}
+
+/** An opening the pointer can hover, to reveal its dimensions on demand. */
+export interface DoorHoverTarget {
+  opening: ResolvedOpening;
+  /** Invisible proxy volume the raycaster tests against. */
+  mesh: THREE.Mesh;
+  setHighlight(on: boolean): void;
 }
 
 export interface BuildingModel {
@@ -18,8 +26,7 @@ export interface BuildingModel {
   /** Door leaf/jamb groups, hidden in plan view so floor symbols read cleanly. */
   doorGroups: THREE.Group[];
   openings: ResolvedOpening[];
-  /** World position just outside each opening, for placing labels. */
-  openingAnchors: Map<string, THREE.Vector3>;
+  hoverTargets: DoorHoverTarget[];
 }
 
 const WALL_COLOR = 0xe3e8ec;
@@ -69,7 +76,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
   const doors: DoorControl[] = [];
   const doorGroups: THREE.Group[] = [];
   const allOpenings: ResolvedOpening[] = [];
-  const openingAnchors = new Map<string, THREE.Vector3>();
+  const hoverTargets: DoorHoverTarget[] = [];
   const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 
   const addFading = (
@@ -124,16 +131,23 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
       doors.push(built.control);
       doorGroups.push(built.group);
 
-      // Doors deliberately stay opaque while their wall ghosts out: looking in
-      // from outside, the openings are exactly what we're here to review.
-      const center = new THREE.Vector3((op.uStart + op.uEnd) / 2, op.height / 2, 0)
-        .applyMatrix4(frame.matrix);
+      const annotations = makeDoorAnnotations(op, frame);
+      group.add(annotations.group);
 
-      group.add(makeDoorMarkers(op, frame));
-      openingAnchors.set(
-        op.id,
-        center.clone().addScaledVector(frame.outward, 13).setY(op.height + 4),
+      // Invisible slab straddling the opening. Hovering it reveals the door's
+      // dimensions; it has real depth so it can also be hit from straight above
+      // in plan view, where the wall itself is edge-on.
+      const proxyHolder = new THREE.Group();
+      const proxy = new THREE.Mesh(
+        new THREE.BoxGeometry(op.width, op.height, 4),
+        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
       );
+      proxy.position.set((op.uStart + op.uEnd) / 2, op.height / 2, 0);
+      proxyHolder.add(proxy);
+      proxyHolder.applyMatrix4(frame.matrix);
+      group.add(proxyHolder);
+
+      hoverTargets.push({ opening: op, mesh: proxy, setHighlight: annotations.setHighlight });
     }
   }
 
@@ -152,7 +166,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     v(L / 2, (eave + ridge) / 2, (3 * W) / 4),
   );
 
-  return { group, fadePanels, doors, doorGroups, openings: allOpenings, openingAnchors };
+  return { group, fadePanels, doors, doorGroups, openings: allOpenings, hoverTargets };
 }
 
 /**

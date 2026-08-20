@@ -80,24 +80,6 @@ const leftCorner = makeTextSprite('LEFT\nCORNER', 3, '#2c6e9e');
 leftCorner.position.set(L - 9, 0.1, -22);
 scene.add(leftCorner);
 
-// Callout outside each opening: what it is, how big, and where it was measured
-// from -- enough to check the model against the tape without opening the JSON.
-for (const op of building.openings) {
-  const anchor = building.openingAnchors.get(op.id);
-  if (!anchor) continue;
-  const label = makeTextSprite(
-    [
-      op.label,
-      `${formatFeet(op.width)} W x ${formatFeet(op.height)} H`,
-      `${formatFeet(op.offset)} off ${op.fromCorner} corner`,
-    ].join('\n'),
-    2.3,
-    '#8a4a12',
-  );
-  label.position.copy(anchor);
-  scene.add(label);
-}
-
 // ----------------------------------------------------------------- cameras
 const perspCamera = new THREE.PerspectiveCamera(
   55,
@@ -155,6 +137,7 @@ function setPlanView(on: boolean): void {
   viewToggle.textContent = on ? 'Switch to 3D view' : 'Switch to plan view';
   viewToggle.classList.toggle('active', on);
   for (const doorGroup of building.doorGroups) doorGroup.visible = !on;
+  clearHover();
   hint.innerHTML = on
     ? 'Drag: pan &middot; Scroll: zoom'
     : 'Left-drag: orbit &middot; Right-drag: pan<br />Scroll: zoom';
@@ -179,6 +162,82 @@ for (const door of building.doors) {
   render();
   doorList.appendChild(button);
 }
+
+// ----------------------------------------------------------- hover tooltip
+// Door dimensions stay out of the way until asked for: hovering an opening
+// (in either view) reveals its size and the corner it was measured from.
+const tooltip = document.getElementById('tooltip')!;
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const hoverMeshes = building.hoverTargets.map((target) => target.mesh);
+const WALL_NAMES: Record<string, string> = {
+  front: 'front wall',
+  rear: 'rear wall',
+  leftEnd: 'left end wall',
+  rightEnd: 'right end wall',
+};
+
+let hovered: (typeof building.hoverTargets)[number] | null = null;
+let dragging = false;
+
+function clearHover(): void {
+  hovered?.setHighlight(false);
+  hovered = null;
+  tooltip.style.display = 'none';
+}
+
+function updateHover(event: PointerEvent): void {
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, planView ? planCamera : perspCamera);
+  const hit = raycaster.intersectObjects(hoverMeshes, false)[0];
+  const target = hit
+    ? (building.hoverTargets.find((t) => t.mesh === hit.object) ?? null)
+    : null;
+
+  if (target !== hovered) {
+    hovered?.setHighlight(false);
+    target?.setHighlight(true);
+    hovered = target;
+  }
+  if (!target) {
+    tooltip.style.display = 'none';
+    return;
+  }
+
+  const op = target.opening;
+  tooltip.innerHTML = [
+    `<strong>${op.label}</strong>`,
+    `${formatFeet(op.width)} W &times; ${formatFeet(op.height)} H`,
+    `${formatFeet(op.offset)} off the ${op.fromCorner} corner`,
+    `<span class="muted">${WALL_NAMES[op.wall] ?? op.wall} &middot; measured from outside</span>`,
+  ].join('<br />');
+  tooltip.style.display = 'block';
+
+  // Flip the tooltip back across the cursor rather than let it run off-screen.
+  const pad = 16;
+  const x = event.clientX + pad;
+  const y = event.clientY + pad;
+  tooltip.style.left = `${
+    x + tooltip.offsetWidth > window.innerWidth ? event.clientX - pad - tooltip.offsetWidth : x
+  }px`;
+  tooltip.style.top = `${
+    y + tooltip.offsetHeight > window.innerHeight ? event.clientY - pad - tooltip.offsetHeight : y
+  }px`;
+}
+
+renderer.domElement.addEventListener('pointermove', (event) => {
+  if (dragging) return;
+  updateHover(event);
+});
+renderer.domElement.addEventListener('pointerdown', () => {
+  dragging = true;
+  clearHover();
+});
+window.addEventListener('pointerup', () => {
+  dragging = false;
+});
+renderer.domElement.addEventListener('pointerleave', clearHover);
 
 // ------------------------------------------------------------------ resize
 window.addEventListener('resize', () => {

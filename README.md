@@ -29,6 +29,9 @@ the tape was pulled from, and the `offset` to the near edge. **Corners are named
 from outside, facing that wall** — the 3D view labels the front wall and both its corners
 so the convention is checkable at a glance.
 
+**Hover any door** — in either view — to see its size and the corner it was measured from.
+The hovered opening highlights so it's clear which one the numbers belong to.
+
 Doors can be opened and closed from the panel. In plan view the leaves are hidden and
 each opening shows as an architectural floor symbol: a threshold band, approach lines for
 the overhead door, and swing arcs for the hinged leaves.
