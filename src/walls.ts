@@ -1,5 +1,7 @@
 import * as THREE from 'three';
-import type { BuildingSpec, Opening, WallId } from './types';
+import type { BuildingSpec, Opening } from './types';
+import { roofHeightAt } from './geometry';
+import { buildFootprint, wallSegments, type Footprint, type WallSegment } from './footprint';
 
 /**
  * A wall's local coordinate system.
@@ -10,13 +12,15 @@ import type { BuildingSpec, Opening, WallId } from './types';
  * ("27' off the right corner") regardless of which wall they land on.
  */
 export interface WallFrame {
-  id: WallId;
+  id: string;
   /** Length of the wall along u. */
   span: number;
   /** Outward-facing normal, for camera-side fading. */
   outward: THREE.Vector3;
   /** Transforms wall-local (u, v, inward) into world space. */
   matrix: THREE.Matrix4;
+  /** World z at a point along the wall, which sets the roof height above it. */
+  zAt(u: number): number;
 }
 
 export interface ResolvedOpening extends Opening {
@@ -28,28 +32,36 @@ export interface ResolvedOpening extends Opening {
 
 const UP = new THREE.Vector3(0, 1, 0);
 
-function makeFrame(
-  id: WallId,
-  origin: THREE.Vector3,
-  uDir: THREE.Vector3,
-  outward: THREE.Vector3,
-  span: number,
-): WallFrame {
-  // uDir x UP always yields the inward normal for these four walls.
+function makeFrame(segment: WallSegment): WallFrame {
+  const uDir = new THREE.Vector3(
+    (segment.end.x - segment.start.x) / segment.span,
+    0,
+    (segment.end.y - segment.start.y) / segment.span,
+  );
+  // uDir x UP is the inward normal for a counter-clockwise perimeter.
   const inward = new THREE.Vector3().crossVectors(uDir, UP);
-  const matrix = new THREE.Matrix4().makeBasis(uDir, UP, inward).setPosition(origin);
-  return { id, span, outward, matrix };
+  const matrix = new THREE.Matrix4()
+    .makeBasis(uDir, UP, inward)
+    .setPosition(segment.start.x, 0, segment.start.y);
+  const z0 = segment.start.y;
+  const z1 = segment.end.y;
+  return {
+    id: segment.id,
+    span: segment.span,
+    outward: segment.outward,
+    matrix,
+    zAt: (u) => z0 + ((z1 - z0) * u) / segment.span,
+  };
 }
 
-export function wallFrames(spec: BuildingSpec): Record<WallId, WallFrame> {
-  const { length: L, width: W } = spec;
-  const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
-  return {
-    front: makeFrame('front', v(0, 0, 0), v(1, 0, 0), v(0, 0, -1), L),
-    rear: makeFrame('rear', v(L, 0, W), v(-1, 0, 0), v(0, 0, 1), L),
-    rightEnd: makeFrame('rightEnd', v(0, 0, W), v(0, 0, -1), v(-1, 0, 0), W),
-    leftEnd: makeFrame('leftEnd', v(L, 0, 0), v(0, 0, 1), v(1, 0, 0), W),
-  };
+export function wallFrames(spec: BuildingSpec, footprint?: Footprint): WallFrame[] {
+  const fp = footprint ?? buildFootprint(spec);
+  return wallSegments(spec, fp).map(makeFrame);
+}
+
+/** Look up a wall by id, for openings and ramps that name one. */
+export function findWall(frames: WallFrame[], id: string): WallFrame | undefined {
+  return frames.find((frame) => frame.id === id);
 }
 
 /** Convert an opening's corner-relative offset into wall-local u coordinates. */
@@ -61,17 +73,28 @@ export function resolveOpening(opening: Opening, frame: WallFrame): ResolvedOpen
   return { ...opening, uStart, uEnd: uStart + opening.width };
 }
 
-/** Outline of a wall in local (u, v), counter-clockwise. Gable ends carry the peak. */
+/**
+ * Outline of a wall in local (u, v), counter-clockwise. The top follows the
+ * underside of the roof, which gives flat tops to walls running along the ridge
+ * and gable peaks to those crossing it.
+ */
 export function wallOutline(spec: BuildingSpec, frame: WallFrame): THREE.Vector2[] {
-  const { eaveHeight: eave, ridgeHeight: ridge } = spec;
-  const isGableEnd = frame.id === 'leftEnd' || frame.id === 'rightEnd';
+  const topAt = (u: number) => roofHeightAt(spec, frame.zAt(u));
   const pts = [
     new THREE.Vector2(0, 0),
     new THREE.Vector2(frame.span, 0),
-    new THREE.Vector2(frame.span, eave),
+    new THREE.Vector2(frame.span, topAt(frame.span)),
   ];
-  if (isGableEnd) pts.push(new THREE.Vector2(frame.span / 2, ridge));
-  pts.push(new THREE.Vector2(0, eave));
+
+  // Insert the peak where the wall crosses the ridge line.
+  const ridgeZ = spec.width / 2;
+  const z0 = frame.zAt(0);
+  const z1 = frame.zAt(frame.span);
+  if ((z0 - ridgeZ) * (z1 - ridgeZ) < 0) {
+    pts.push(new THREE.Vector2((frame.span * (ridgeZ - z0)) / (z1 - z0), spec.ridgeHeight));
+  }
+
+  pts.push(new THREE.Vector2(0, topAt(0)));
   return pts;
 }
 

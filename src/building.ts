@@ -1,6 +1,12 @@
 import * as THREE from 'three';
-import type { BuildingSpec, WallId } from './types';
-import { resolveOpening, wallFrames, wallGeometry, type ResolvedOpening } from './walls';
+import type { BuildingSpec } from './types';
+import {
+  resolveOpening,
+  wallFrames,
+  wallGeometry,
+  type ResolvedOpening,
+  type WallFrame,
+} from './walls';
 import {
   makeManDoor,
   makeOpeningFrame,
@@ -9,8 +15,10 @@ import {
   type DoorControl,
 } from './doors';
 import { makeDoorAnnotations } from './doorMarkers';
-import { buildObstruction, type Footprint } from './obstructions';
+import { buildObstruction } from './obstructions';
 import { buildRamp } from './ramp';
+import { buildFootprint, type Footprint } from './footprint';
+import { clipPolygonByZ, roofHeightAt, type PlanPoint, type Rect } from './geometry';
 import { formatFeet } from './labels';
 
 /** A surface that fades out when the camera moves to its outside. */
@@ -38,18 +46,21 @@ export interface BuildingModel {
   planHiddenGroups: THREE.Object3D[];
   openings: ResolvedOpening[];
   /** Unusable floor areas, for placement checks later. */
-  blockedFootprints: Footprint[];
+  blockedFootprints: Rect[];
   /** Sloped floor - drivable, but nothing should be set down on it. */
-  rampFootprints: Footprint[];
+  rampFootprints: Rect[];
   hoverTargets: HoverTarget[];
+  footprint: Footprint;
+  walls: WallFrame[];
 }
 
 const WALL_COLOR = 0xe3e8ec;
 const ROOF_COLOR = 0xb6bfc7;
 const SLAB_COLOR = 0xcfceca;
 const EDGE_COLOR = 0x46525d;
+const SLAB_DEPTH = 0.5;
 
-const WALL_NAMES: Record<WallId, string> = {
+const WALL_NAMES: Record<string, string> = {
   front: 'front wall',
   rear: 'rear wall',
   leftEnd: 'left end wall',
@@ -75,22 +86,6 @@ function edgesFor(geometry: THREE.BufferGeometry): THREE.LineSegments {
   );
 }
 
-function quadGeometry(
-  a: THREE.Vector3,
-  b: THREE.Vector3,
-  c: THREE.Vector3,
-  d: THREE.Vector3,
-): THREE.BufferGeometry {
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute([a, b, c, d].flatMap((v) => [v.x, v.y, v.z]), 3),
-  );
-  geo.setIndex([0, 1, 2, 0, 2, 3]);
-  geo.computeVertexNormals();
-  return geo;
-}
-
 /** Invisible volume used purely as a raycast target for hover callouts. */
 function hoverProxy(width: number, height: number, depth: number): THREE.Mesh {
   return new THREE.Mesh(
@@ -99,17 +94,51 @@ function hoverProxy(width: number, height: number, depth: number): THREE.Mesh {
   );
 }
 
+/** Extrude the plan polygon downward into a slab whose top sits at y=0. */
+function slabGeometry(points: PlanPoint[]): THREE.BufferGeometry {
+  const geo = new THREE.ExtrudeGeometry(new THREE.Shape(points), {
+    depth: SLAB_DEPTH,
+    bevelEnabled: false,
+  });
+  // Shape-local (x, y, z) -> world (x, -z, y): plan y carries world z, and the
+  // extrusion runs downward.
+  geo.applyMatrix4(
+    new THREE.Matrix4().makeBasis(
+      new THREE.Vector3(1, 0, 0),
+      new THREE.Vector3(0, 0, 1),
+      new THREE.Vector3(0, -1, 0),
+    ),
+  );
+  return geo;
+}
+
+/**
+ * One roof pane from a plan polygon, lifted so every vertex sits on the
+ * underside of the gable. The polygon must not cross the ridge, or the pane
+ * would cut through it instead of folding.
+ */
+function roofPane(spec: BuildingSpec, points: PlanPoint[]): THREE.BufferGeometry {
+  const geo = new THREE.ShapeGeometry(new THREE.Shape(points));
+  const position = geo.attributes.position;
+  for (let i = 0; i < position.count; i++) {
+    const x = position.getX(i);
+    const z = position.getY(i);
+    position.setXYZ(i, x, roofHeightAt(spec, z), z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
 export function buildBuilding(spec: BuildingSpec): BuildingModel {
-  const { length: L, width: W, eaveHeight: eave, ridgeHeight: ridge } = spec;
+  const { width: W, eaveHeight: eave, ridgeHeight: ridge } = spec;
   const group = new THREE.Group();
   const fadePanels: FadePanel[] = [];
   const doors: DoorControl[] = [];
   const planHiddenGroups: THREE.Object3D[] = [];
   const allOpenings: ResolvedOpening[] = [];
-  const blockedFootprints: Footprint[] = [];
-  const rampFootprints: Footprint[] = [];
+  const blockedFootprints: Rect[] = [];
+  const rampFootprints: Rect[] = [];
   const hoverTargets: HoverTarget[] = [];
-  const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 
   const addFading = (
     geometry: THREE.BufferGeometry,
@@ -127,26 +156,24 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     });
   };
 
-  // Slab: top surface at y=0.
-  const slabDepth = 0.5;
+  const footprint = buildFootprint(spec);
+
   const slab = new THREE.Mesh(
-    new THREE.BoxGeometry(L, slabDepth, W),
+    slabGeometry(footprint.points),
     new THREE.MeshStandardMaterial({ color: SLAB_COLOR, roughness: 0.95 }),
   );
-  slab.position.set(L / 2, -slabDepth / 2, W / 2);
   slab.receiveShadow = true;
   group.add(slab);
 
   // Walls, each punched with the openings assigned to it.
-  const frames = wallFrames(spec);
-  for (const id of Object.keys(frames) as WallId[]) {
-    const frame = frames[id];
+  const walls = wallFrames(spec, footprint);
+  for (const frame of walls) {
     const openings = spec.openings
-      .filter((op) => op.wall === id)
+      .filter((op) => op.wall === frame.id)
       .map((op) => resolveOpening(op, frame));
     allOpenings.push(...openings);
 
-    const midHeight = (id === 'leftEnd' || id === 'rightEnd' ? (eave + ridge) / 2 : eave) / 2;
+    const midHeight = roofHeightAt(spec, frame.zAt(frame.span / 2)) / 2;
     const wallCenter = new THREE.Vector3(frame.span / 2, midHeight, 0).applyMatrix4(
       frame.matrix,
     );
@@ -188,13 +215,13 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
           ...(sill > 0.1 ? [`Sill ${formatFeet(sill)} above the slab`] : []),
           `${formatFeet(op.offset)} off the ${op.fromCorner} corner`,
         ],
-        note: `${WALL_NAMES[op.wall]} · measured from outside`,
+        note: `${WALL_NAMES[op.wall] ?? op.wall} · measured from outside`,
         setHighlight: annotations.setHighlight,
       });
     }
   }
 
-  // Walled-off corners. Solid to the roof in 3D, hatched floor patch in plan.
+  // Walled-off areas inside the shop. Solid in 3D, hatched floor patch in plan.
   for (const ob of spec.obstructions ?? []) {
     const built = buildObstruction(spec, ob);
     group.add(built.solid, built.symbol, built.hoverMesh);
@@ -206,7 +233,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
       lines: [
         `${formatFeet(ob.alongLength)} × ${formatFeet(ob.alongWidth)} footprint`,
         `${ob.alongLength * ob.alongWidth} sq ft of floor lost`,
-        'Full height to the roof',
+        ob.height === undefined ? 'Full height to the roof' : `${formatFeet(ob.height)} tall`,
       ],
       note: ob.note,
       setHighlight: built.setHighlight,
@@ -231,20 +258,24 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     });
   }
 
-  // Roof panes from each eave up to the ridge (ridge runs along X at z = W/2).
+  // Roof: the footprint split at the ridge, each half lifted onto the gable.
+  const ridgeZ = W / 2;
   const rise = ridge - eave;
-  addFading(
-    quadGeometry(v(0, eave, 0), v(L, eave, 0), v(L, ridge, W / 2), v(0, ridge, W / 2)),
-    ROOF_COLOR,
-    v(0, W / 2, -rise),
-    v(L / 2, (eave + ridge) / 2, W / 4),
-  );
-  addFading(
-    quadGeometry(v(0, ridge, W / 2), v(L, ridge, W / 2), v(L, eave, W), v(0, eave, W)),
-    ROOF_COLOR,
-    v(0, W / 2, rise),
-    v(L / 2, (eave + ridge) / 2, (3 * W) / 4),
-  );
+  for (const [keepBelow, normal] of [
+    [true, new THREE.Vector3(0, ridgeZ, -rise)],
+    [false, new THREE.Vector3(0, ridgeZ, rise)],
+  ] as const) {
+    const half = clipPolygonByZ(footprint.points, ridgeZ, keepBelow);
+    if (half.length < 3) continue;
+    const centerZ = half.reduce((sum, p) => sum + p.y, 0) / half.length;
+    const centerX = half.reduce((sum, p) => sum + p.x, 0) / half.length;
+    addFading(
+      roofPane(spec, half),
+      ROOF_COLOR,
+      normal,
+      new THREE.Vector3(centerX, roofHeightAt(spec, centerZ), centerZ),
+    );
+  }
 
   return {
     group,
@@ -255,6 +286,8 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     blockedFootprints,
     rampFootprints,
     hoverTargets,
+    footprint,
+    walls,
   };
 }
 

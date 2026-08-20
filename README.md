@@ -1,6 +1,7 @@
 # Welding Shop 3D Planner
 
-Interactive 3D space-planning model of our 50' × 105' welding/fab shop building.
+Interactive 3D space-planning model of our welding/fab shop building — a 50' × 105'
+envelope with a corner cut out of it, giving 5,055 sq ft of floor.
 Drag equipment around, save layout scenarios, and simulate forklift material flow
 (including 24' stock) to test workflows before we move anything real.
 
@@ -19,6 +20,13 @@ Controls: left-drag orbits, right-drag pans, scroll zooms. Press **P** (or use t
 button) to toggle the top-down plan view, and use the **View from** buttons to jump to a
 standard elevation. Walls and roof automatically fade when
 the camera is outside them so the interior stays visible.
+
+## Footprint
+
+The building is not a rectangle. It's a 50' × 105' envelope with corner bites removed, and
+that polygon drives the slab, roof panes, wall segments, and floor grid together — so a
+`cutouts` entry shortens the affected walls, trims the roof, and stops the grid in one go.
+Wall dimension labels are measured off each actual wall, not the envelope.
 
 ## Dimensions
 

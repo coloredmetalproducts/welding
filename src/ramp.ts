@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { BuildingSpec, Ramp } from './types';
-import { wallFrames } from './walls';
-import type { Footprint } from './obstructions';
+import { findWall, wallFrames } from './walls';
+import type { Rect } from './geometry';
 
 /**
  * Ramp running down into the shop from an opening in one wall. Built as a wedge
@@ -18,11 +18,12 @@ export interface RampBuild {
   setHighlight(on: boolean): void;
   /** Rise over run as a percentage, for the callout. */
   gradePercent: number;
-  footprint: Footprint;
+  footprint: Rect;
 }
 
 export function buildRamp(spec: BuildingSpec, ramp: Ramp): RampBuild {
-  const frame = wallFrames(spec)[ramp.wall];
+  const frame = findWall(wallFrames(spec), ramp.wall);
+  if (!frame) throw new Error(`Ramp ${ramp.id} names unknown wall ${ramp.wall}`);
   const uStart =
     ramp.fromCorner === 'right' ? ramp.offset : frame.span - ramp.offset - ramp.width;
   const uEnd = uStart + ramp.width;

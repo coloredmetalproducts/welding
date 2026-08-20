@@ -62,8 +62,12 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 > *Deliverable: walk around inside an accurate empty building in the browser.*
 
 - Vite + TypeScript + Three.js project scaffold, npm scripts, README.
-- 50' × 105' slab, walls, gabled roof — **18' eave, 25' ridge** (ridge assumed to run along
-  the 105' length, standard for a clear-span metal building).
+- **Footprint is a polygon, not a rectangle:** a 50' × 105' envelope with corner bites
+  taken out of it. The polygon drives the slab, roof panes, wall segments and floor grid, so
+  they stay consistent. **Built: 15' × 13' bite at the rear-left corner → 5,055 sq ft floor.**
+- Walls, gabled roof — **18' eave, 25' ridge**, ridge running along the 105' length. Each
+  wall's top follows the roof underside, so walls across the ridge get a gable peak and
+  walls along it get a flat top, with no special-casing.
 - Orbit / pan / zoom camera; **top-down orthographic "plan view" toggle** (this is the view
   we'll actually plan in half the time).
 - Walls and roof auto-fade when the camera is outside so the interior is always visible.
@@ -86,9 +90,9 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
   the wall and falls to our floor level inboard.
   **Built: 7' wide, 12' run, 33" rise (23% grade), on the left end wall 5'-7" off the
   cinderblock notch. Costs 84 sq ft of sloped floor.**
-- **Unusable areas:** corner-anchored obstructions, solid to the roof in 3D and hatched on
-  the floor in plan. Built and working, but currently no instances — the cinderblock notch
-  was pulled pending a re-measure (there's another notch ahead of it).
+- **Unusable areas:** obstructions positioned from a named corner by an offset along each
+  axis, solid in 3D and hatched on the floor in plan, optionally capped below the roof.
+  **Built: 6' × 9' cinderblock notch against the cut corner (54 sq ft).**
 - **Mezzanine:** parametric platform (footprint, deck height, stair location, railing).
   Clearance under it is honored by the placement system. (Dims TBD.)
 - Every TBD item flagged visually (hatched material) until real dimensions replace it.
@@ -163,8 +167,9 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 - [ ] Any other garage/man doors on the rear or end walls?
 - [ ] Which compass direction does the front wall face?
 - [x] Ramp: internal, left end wall, 7' wide, 12' run, 33" rise, 5'-7" off the notch
-- [ ] Cinderblock notches: the rear-left one (6' × 9') is pulled for now — there's another
-      notch before it. Need both, measured from a named corner.
+      (14'-7" off the cut corner, since the left end wall now runs only 37')
+- [x] Rear-left corner: 15' × 13' is outside the building envelope (not an obstruction)
+- [x] Cinderblock notch: 6' × 9', hard against the cut corner, 13' off the envelope rear
 - [x] Ramp opening: 7' wide × 9' tall, sill 33" up (top of ramp), left end wall
 - [ ] Grade at the front bay door — is the apron level with the slab?
 - [ ] Mezzanine: footprint, deck height, stair location, what's under/on it

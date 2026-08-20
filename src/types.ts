@@ -36,18 +36,40 @@ export interface Opening {
 }
 
 /**
+ * A corner bite taken out of the rectangular envelope - floor that isn't part
+ * of the building at all, so the walls and roof stop short of it.
+ */
+export interface Cutout {
+  id: string;
+  label: string;
+  note?: string;
+  corner: CornerName;
+  /** Extent along the length axis, measured off the end wall. */
+  alongLength: number;
+  /** Extent along the width axis, measured off the front or rear wall. */
+  alongWidth: number;
+}
+
+/**
  * Floor area that can't be used - a walled-off corner, a column enclosure.
- * Anchored to a corner and sized by its extent along each building axis.
+ * Positioned from a named corner by an offset along each building axis, so
+ * areas that sit behind another one can still be measured off the same corner.
  */
 export interface Obstruction {
   id: string;
   label: string;
   note?: string;
   corner: CornerName;
-  /** Extent measured off the end wall, along the length axis. */
+  /** Gap between the end wall and the near edge, along the length axis. Default 0. */
+  offsetLength?: number;
+  /** Gap between the front/rear wall and the near edge, along the width axis. Default 0. */
+  offsetWidth?: number;
+  /** Extent along the length axis. */
   alongLength: number;
-  /** Extent measured off the front or rear wall, along the width axis. */
+  /** Extent along the width axis. */
   alongWidth: number;
+  /** Flat top at this height. Omit to run all the way up to the roof. */
+  height?: number;
 }
 
 /**
@@ -72,10 +94,12 @@ export interface Ramp {
 
 export interface BuildingSpec {
   name: string;
+  /** Overall envelope, before any corner cutouts. */
   length: number;
   width: number;
   eaveHeight: number;
   ridgeHeight: number;
+  cutouts?: Cutout[];
   openings: Opening[];
   obstructions?: Obstruction[];
   ramps?: Ramp[];

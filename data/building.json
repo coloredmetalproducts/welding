@@ -42,7 +42,17 @@
       "note": "9'-0\" clear measured up from the top of the ramp; aligned with the ramp"
     }
   ],
-  "obstructions": [],
+  "obstructions": [
+    {
+      "id": "notch-cb",
+      "label": "Cinderblock notch",
+      "note": "Walled to the roof - inaccessible, unusable space",
+      "corner": "rearLeft",
+      "offsetWidth": 13,
+      "alongLength": 6,
+      "alongWidth": 9
+    }
+  ],
   "ramps": [
     {
       "id": "ramp-left",
@@ -51,15 +61,24 @@
       "wall": "leftEnd",
       "fromCorner": "left",
       "offset": 14.5833,
-      "offsetComment": "14'-7\" off the rear (left) corner of the left end wall. Originally measured as 9' of cinderblock notch + 5'-7\"; provisional until the notches are re-measured.",
+      "offsetComment": "14'-7\" off the left corner of the left end wall (which is now the cut corner at 13' in): 9' of cinderblock notch plus the 5'-7\" measured off the cinderblock wall.",
       "width": 7,
       "run": 12,
       "rise": 2.75
     }
   ],
   "tbd": {
-    "notches": "Cinderblock notch temporarily removed - there is another notch before it. The removed one was: rearLeft corner, 6' along the length x 9' along the width.",
     "mezzanine": "footprint, deck height, stair location",
-    "frontGrade": "is the apron at the bay door level with the slab?"
-  }
+    "frontGrade": "is the apron at the bay door level with the slab?",
+    "cutCorner": "what occupies the cut-out rear-left corner - the adjacent building?"
+  },
+  "cutouts": [
+    {
+      "id": "cut-rear-left",
+      "label": "Rear-left corner not part of building",
+      "corner": "rearLeft",
+      "alongLength": 15,
+      "alongWidth": 13
+    }
+  ]
 }

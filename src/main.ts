@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import buildingData from '../data/building.json';
 import { buildBuilding, updatePanelFades } from './building';
 import { makeFloorGrid } from './grid';
-import { makeTextSprite } from './labels';
+import { formatFeet, makeTextSprite } from './labels';
 import type { BuildingSpec } from './types';
 
 // JSON widens string literals, so the spec shape is asserted at the boundary.
@@ -54,21 +54,21 @@ scene.add(ground);
 
 const building = buildBuilding(spec);
 scene.add(building.group);
-scene.add(makeFloorGrid(L, W));
+scene.add(makeFloorGrid(L, W, building.footprint.cuts));
 
 // ------------------------------------------------------------------ labels
+// The cut corner makes the floor area non-obvious, so state it outright.
 document.getElementById('dims')!.textContent =
-  `${W}' × ${L}' · ${spec.eaveHeight}' eave / ${spec.ridgeHeight}' ridge`;
+  `${W}' × ${L}' envelope · ${building.footprint.area.toLocaleString()} sq ft floor` +
+  ` · ${spec.eaveHeight}' eave / ${spec.ridgeHeight}' ridge`;
 
-// Footprint dimensions on all four sides.
-for (const z of [-4, W + 7]) {
-  const label = makeTextSprite(`${L}'-0"`, 5);
-  label.position.set(L / 2, 0.1, z);
-  scene.add(label);
-}
-for (const x of [-9, L + 9]) {
-  const label = makeTextSprite(`${W}'-0"`, 5);
-  label.position.set(x, 0.1, W / 2);
+// One dimension label per envelope wall. A corner cutout shortens two of them,
+// so these are measured off the actual wall rather than the overall envelope.
+for (const wall of building.walls) {
+  if (!(wall.id in { front: 1, rear: 1, leftEnd: 1, rightEnd: 1 })) continue;
+  const mid = new THREE.Vector3(wall.span / 2, 0.1, 0).applyMatrix4(wall.matrix);
+  const label = makeTextSprite(formatFeet(wall.span), 5);
+  label.position.copy(mid.addScaledVector(wall.outward, 8)).setY(0.1);
   scene.add(label);
 }
 

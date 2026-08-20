@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { BuildingSpec, Obstruction } from './types';
+import { resolveCornerRect, roofHeightAt, type Rect } from './geometry';
 
 /**
  * Walled-off floor area. Rendered solid in 3D (it runs to the roof) and as a
@@ -10,13 +11,6 @@ const BLOCK_COLOR = 0x9d9890;
 const OUTLINE_COLOR = 0x8a6a2f;
 const HIGHLIGHT_COLOR = 0xf0a03c;
 
-export interface Footprint {
-  x0: number;
-  x1: number;
-  z0: number;
-  z1: number;
-}
-
 export interface ObstructionBuild {
   /** Full-height mass, hidden in plan view. */
   solid: THREE.Group;
@@ -24,27 +18,19 @@ export interface ObstructionBuild {
   symbol: THREE.Group;
   hoverMesh: THREE.Mesh;
   setHighlight(on: boolean): void;
-  footprint: Footprint;
+  footprint: Rect;
 }
 
-/** Underside of the roof at a given z. */
-export function roofHeightAt(spec: BuildingSpec, z: number): number {
-  const half = spec.width / 2;
-  const t = z <= half ? z / half : (spec.width - z) / half;
-  return spec.eaveHeight + (spec.ridgeHeight - spec.eaveHeight) * t;
-}
-
-/** Resolve a corner-anchored obstruction into a world footprint. */
-export function resolveFootprint(spec: BuildingSpec, ob: Obstruction): Footprint {
-  // Left/right as seen from outside the front wall: right is x=0, left is x=length.
-  const onLeft = ob.corner === 'rearLeft' || ob.corner === 'frontLeft';
-  const onRear = ob.corner === 'rearLeft' || ob.corner === 'rearRight';
-  return {
-    x0: onLeft ? spec.length - ob.alongLength : 0,
-    x1: onLeft ? spec.length : ob.alongLength,
-    z0: onRear ? spec.width - ob.alongWidth : 0,
-    z1: onRear ? spec.width : ob.alongWidth,
-  };
+/** Resolve a corner-referenced obstruction into a world footprint. */
+export function resolveFootprint(spec: BuildingSpec, ob: Obstruction): Rect {
+  return resolveCornerRect(
+    spec,
+    ob.corner,
+    ob.offsetLength ?? 0,
+    ob.offsetWidth ?? 0,
+    ob.alongLength,
+    ob.alongWidth,
+  );
 }
 
 /** Diagonal hazard hatching, used to mark floor area that can't be used. */
@@ -76,17 +62,20 @@ export function buildObstruction(spec: BuildingSpec, ob: Obstruction): Obstructi
   const cz = (fp.z0 + fp.z1) / 2;
 
   // Cross-section in the (z, y) plane so the top can follow the roof slope,
-  // then extruded across the width. The section folds at the ridge if it spans it.
+  // then extruded across the width. The section folds at the ridge if it spans
+  // it; a capped height gives a flat top instead.
+  const capped = ob.height !== undefined;
+  const topAt = (z: number) => ob.height ?? roofHeightAt(spec, z);
   const ridgeZ = spec.width / 2;
   const section: THREE.Vector2[] = [
     new THREE.Vector2(fp.z0, 0),
     new THREE.Vector2(fp.z1, 0),
-    new THREE.Vector2(fp.z1, roofHeightAt(spec, fp.z1)),
+    new THREE.Vector2(fp.z1, topAt(fp.z1)),
   ];
-  if (fp.z0 < ridgeZ && ridgeZ < fp.z1) {
+  if (!capped && fp.z0 < ridgeZ && ridgeZ < fp.z1) {
     section.push(new THREE.Vector2(ridgeZ, spec.ridgeHeight));
   }
-  section.push(new THREE.Vector2(fp.z0, roofHeightAt(spec, fp.z0)));
+  section.push(new THREE.Vector2(fp.z0, topAt(fp.z0)));
 
   const geometry = new THREE.ExtrudeGeometry(new THREE.Shape(section), {
     depth: w,
@@ -149,11 +138,12 @@ export function buildObstruction(spec: BuildingSpec, ob: Obstruction): Obstructi
     ),
   );
 
+  const hoverHeight = ob.height ?? spec.eaveHeight;
   const hoverMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(w, spec.eaveHeight, d),
+    new THREE.BoxGeometry(w, hoverHeight, d),
     new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
   );
-  hoverMesh.position.set(cx, spec.eaveHeight / 2, cz);
+  hoverMesh.position.set(cx, hoverHeight / 2, cz);
 
   return {
     solid,
