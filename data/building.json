@@ -44,19 +44,18 @@
     {
       "id": "ramp-left",
       "label": "Ramp to adjacent building",
-      "note": "Run is the floor measurement, not the slope length",
+      "note": "Ramps down INTO the shop; run is the floor measurement, not the slope",
       "wall": "leftEnd",
       "fromCorner": "left",
       "offset": 14.5833,
       "offsetComment": "9' cinderblock notch + 5'-7\", measured from the rear (left) corner of the left end wall",
       "width": 7,
       "run": 12,
-      "drop": 2.75
+      "rise": 2.75
     }
   ],
   "tbd": {
     "mezzanine": "footprint, deck height, stair location",
-    "rampOpening": "the ramp implies an opening in the left end wall - size not yet given",
-    "grade": "exterior grade assumed 33\" below the slab on the ramp side only"
+    "rampOpening": "the ramp needs an opening in the left end wall, sill 33\" above the slab - size not yet given"
   }
 }

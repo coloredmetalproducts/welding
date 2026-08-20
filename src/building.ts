@@ -33,6 +33,8 @@ export interface BuildingModel {
   openings: ResolvedOpening[];
   /** Unusable floor areas, for placement checks later. */
   blockedFootprints: Footprint[];
+  /** Sloped floor - drivable, but nothing should be set down on it. */
+  rampFootprints: Footprint[];
   hoverTargets: HoverTarget[];
 }
 
@@ -99,6 +101,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
   const planHiddenGroups: THREE.Object3D[] = [];
   const allOpenings: ResolvedOpening[] = [];
   const blockedFootprints: Footprint[] = [];
+  const rampFootprints: Footprint[] = [];
   const hoverTargets: HoverTarget[] = [];
   const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 
@@ -118,9 +121,8 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     });
   };
 
-  // Slab. It runs deep enough to meet the lower exterior grade the ramp lands on,
-  // so the foundation reads as a wall rather than a floating edge.
-  const slabDepth = Math.max(0.5, ...(spec.ramps ?? []).map((r) => r.drop));
+  // Slab: top surface at y=0.
+  const slabDepth = 0.5;
   const slab = new THREE.Mesh(
     new THREE.BoxGeometry(L, slabDepth, W),
     new THREE.MeshStandardMaterial({ color: SLAB_COLOR, roughness: 0.95 }),
@@ -197,16 +199,18 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     });
   }
 
-  // Exterior ramps.
+  // Ramps down into the shop from a neighbouring building at a higher floor.
   for (const ramp of spec.ramps ?? []) {
     const built = buildRamp(spec, ramp);
     group.add(built.group);
+    rampFootprints.push(built.footprint);
     hoverTargets.push({
       mesh: built.hoverMesh,
       title: ramp.label,
       lines: [
         `${formatFeet(ramp.width)} wide · ${formatFeet(ramp.run)} run`,
-        `${formatFeet(ramp.drop)} drop · ${built.gradePercent.toFixed(0)}% grade`,
+        `${formatFeet(ramp.rise)} rise · ${built.gradePercent.toFixed(0)}% grade`,
+        `${Math.round(ramp.width * ramp.run)} sq ft of sloped floor`,
       ],
       note: ramp.note,
       setHighlight: built.setHighlight,
@@ -235,6 +239,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     planHiddenGroups,
     openings: allOpenings,
     blockedFootprints,
+    rampFootprints,
     hoverTargets,
   };
 }

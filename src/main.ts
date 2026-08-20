@@ -41,44 +41,16 @@ sun.shadow.camera.far = 300;
 sun.target.position.copy(center);
 scene.add(sun, sun.target);
 
-// Exterior grade. The ramp tells us the ground past its wall sits below the
-// slab, so the ground is split into two levels with a face at the break rather
-// than left as one plane the ramp would sink through.
-const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x9aa08d, roughness: 1 });
-const rampDrop = Math.max(0, ...(spec.ramps ?? []).map((r) => r.drop));
-const REACH = 1200;
-
-function addGround(
-  xFrom: number,
-  xTo: number,
-  zFrom: number,
-  zTo: number,
-  y: number,
-): void {
-  const plane = new THREE.Mesh(
-    new THREE.PlaneGeometry(xTo - xFrom, zTo - zFrom),
-    groundMaterial,
-  );
-  plane.rotation.x = -Math.PI / 2;
-  plane.position.set((xFrom + xTo) / 2, y, (zFrom + zTo) / 2);
-  plane.receiveShadow = true;
-  scene.add(plane);
-}
-
-if (rampDrop > 0.5) {
-  // The left end wall is at x = L, so everything past it drops by the ramp fall.
-  addGround(-REACH, L, -REACH, REACH, -0.5);
-  addGround(L, REACH, -REACH, REACH, -rampDrop);
-  const breakFace = new THREE.Mesh(
-    new THREE.PlaneGeometry(2 * REACH, rampDrop - 0.5),
-    groundMaterial,
-  );
-  breakFace.position.set(L, -(0.5 + rampDrop) / 2, 0);
-  breakFace.rotation.y = Math.PI / 2;
-  scene.add(breakFace);
-} else {
-  addGround(-REACH, REACH, -REACH, REACH, -0.5);
-}
+// Surrounding ground (slab top sits at y=0, slab is 6" thick). The ramp is
+// internal - the neighbouring building shares our grade - so this stays flat.
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(3000, 3000),
+  new THREE.MeshStandardMaterial({ color: 0x9aa08d, roughness: 1 }),
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.set(center.x, -0.5, center.z);
+ground.receiveShadow = true;
+scene.add(ground);
 
 const building = buildBuilding(spec);
 scene.add(building.group);

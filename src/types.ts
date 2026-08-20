@@ -48,7 +48,11 @@ export interface Obstruction {
   alongWidth: number;
 }
 
-/** An exterior ramp running down from the shop floor to a lower grade. */
+/**
+ * A ramp running INTO the shop from an opening in one wall: highest at the
+ * wall, falling to floor level `run` feet inboard. The adjacent building's
+ * floor sits `rise` above ours.
+ */
 export interface Ramp {
   id: string;
   label: string;
@@ -60,8 +64,8 @@ export interface Ramp {
   width: number;
   /** Horizontal run measured on the floor - NOT the slope length. */
   run: number;
-  /** Fall from shop-floor level to the low end of the ramp. */
-  drop: number;
+  /** Height of the deck where it meets the wall, falling to 0 at the inboard end. */
+  rise: number;
 }
 
 export interface BuildingSpec {

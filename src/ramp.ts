@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 import type { BuildingSpec, Ramp } from './types';
 import { wallFrames } from './walls';
+import type { Footprint } from './obstructions';
 
 /**
- * Exterior ramp falling from shop-floor level to a lower grade outside.
- * Built as a wedge in the wall's own frame so the same data works on any wall.
+ * Ramp running down into the shop from an opening in one wall. Built as a wedge
+ * in the wall's own frame, so the same data works on any wall.
  */
 
-const DECK_COLOR = 0xa8a49c;
+const DECK_COLOR = 0xb0aca4;
 const OUTLINE_COLOR = 0x6a7078;
 const HIGHLIGHT_COLOR = 0xf0a03c;
 
@@ -17,36 +18,36 @@ export interface RampBuild {
   setHighlight(on: boolean): void;
   /** Rise over run as a percentage, for the callout. */
   gradePercent: number;
+  footprint: Footprint;
 }
 
 export function buildRamp(spec: BuildingSpec, ramp: Ramp): RampBuild {
   const frame = wallFrames(spec)[ramp.wall];
   const uStart =
-    ramp.fromCorner === 'right'
-      ? ramp.offset
-      : frame.span - ramp.offset - ramp.width;
+    ramp.fromCorner === 'right' ? ramp.offset : frame.span - ramp.offset - ramp.width;
+  const uEnd = uStart + ramp.width;
 
-  // Cross-section in the wall's (outward, up) plane: a right triangle with the
-  // deck falling from floor level at the wall to `drop` below it at `run` out.
+  // Cross-section in the wall's (inward, up) plane: the deck is highest against
+  // the wall and falls to floor level `run` feet into the shop.
   const section = new THREE.Shape([
     new THREE.Vector2(0, 0),
-    new THREE.Vector2(0, -ramp.drop),
-    new THREE.Vector2(ramp.run, -ramp.drop),
+    new THREE.Vector2(ramp.run, 0),
+    new THREE.Vector2(0, ramp.rise),
   ]);
   const geometry = new THREE.ExtrudeGeometry(section, {
     depth: ramp.width,
     bevelEnabled: false,
   });
-  // Section-local (x, y, z) -> wall-local (u, v, inward): the section runs
-  // outward from the wall, so its x maps to -inward.
+  // Section-local (x, y, z) -> wall-local (uEnd - z, y, x): the section runs
+  // inward from the wall, and the extrusion sweeps back across the opening.
   geometry.applyMatrix4(
     new THREE.Matrix4()
       .makeBasis(
-        new THREE.Vector3(0, 0, -1),
+        new THREE.Vector3(0, 0, 1),
         new THREE.Vector3(0, 1, 0),
-        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(-1, 0, 0),
       )
-      .setPosition(uStart, 0, 0),
+      .setPosition(uEnd, 0, 0),
   );
 
   const group = new THREE.Group();
@@ -57,23 +58,50 @@ export function buildRamp(spec: BuildingSpec, ramp: Ramp): RampBuild {
   group.add(mesh);
 
   const outlineMaterial = new THREE.LineBasicMaterial({ color: OUTLINE_COLOR });
+  group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 20), outlineMaterial));
+
+  // Footprint outline on the floor, so the space the ramp costs reads in plan.
   group.add(
-    new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 20), outlineMaterial),
+    new THREE.LineLoop(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(uStart, 0.06, 0),
+        new THREE.Vector3(uEnd, 0.06, 0),
+        new THREE.Vector3(uEnd, 0.06, ramp.run),
+        new THREE.Vector3(uStart, 0.06, ramp.run),
+      ]),
+      outlineMaterial,
+    ),
   );
 
   const hoverMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(ramp.width, ramp.drop, ramp.run),
+    new THREE.BoxGeometry(ramp.width, ramp.rise, ramp.run),
     new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
   );
-  hoverMesh.position.set(uStart + ramp.width / 2, -ramp.drop / 2, -ramp.run / 2);
+  hoverMesh.position.set((uStart + uEnd) / 2, ramp.rise / 2, ramp.run / 2);
   group.add(hoverMesh);
 
   group.applyMatrix4(frame.matrix);
 
+  // World-space extent, for placement checks later.
+  const corners = [
+    new THREE.Vector3(uStart, 0, 0),
+    new THREE.Vector3(uEnd, 0, 0),
+    new THREE.Vector3(uEnd, 0, ramp.run),
+    new THREE.Vector3(uStart, 0, ramp.run),
+  ].map((p) => p.applyMatrix4(frame.matrix));
+  const xs = corners.map((c) => c.x);
+  const zs = corners.map((c) => c.z);
+
   return {
     group,
     hoverMesh,
-    gradePercent: (ramp.drop / ramp.run) * 100,
+    gradePercent: (ramp.rise / ramp.run) * 100,
+    footprint: {
+      x0: Math.min(...xs),
+      x1: Math.max(...xs),
+      z0: Math.min(...zs),
+      z1: Math.max(...zs),
+    },
     setHighlight(on: boolean) {
       outlineMaterial.color.setHex(on ? HIGHLIGHT_COLOR : OUTLINE_COLOR);
       material.emissive.setHex(on ? 0x4a3410 : 0x000000);
