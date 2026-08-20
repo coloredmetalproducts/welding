@@ -27,6 +27,35 @@
       }
       #ui button:hover { background: #e2e9ef; }
       #ui button.active { background: #2c6e9e; border-color: #2c6e9e; color: #fff; }
+      #ui .row { display: flex; flex-wrap: wrap; gap: 5px; }
+      #ui .row button {
+        flex: 1 1 auto; width: auto; margin: 0; padding: 6px 8px; font-size: 12px;
+      }
+      #ui .section {
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.05em; color: #7b8792; margin: 12px 0 6px;
+      }
+      #tooltip {
+        position: fixed; z-index: 20; display: none; pointer-events: none;
+        background: rgba(28, 37, 45, 0.94); color: #f2f5f7;
+        border-radius: 7px; padding: 8px 11px;
+        font-size: 12px; line-height: 1.55;
+        max-width: min(300px, calc(100vw - 32px));
+        box-shadow: 0 4px 14px rgba(20, 28, 35, 0.3);
+      }
+      #tooltip .muted { color: #9fadb8; font-size: 11px; }
+      #tooltip .action { color: #ffc978; font-size: 11px; font-weight: 600; }
+      #selection {
+        position: fixed; right: 16px; top: 16px; z-index: 10; display: none;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid #c3ccd4; border-radius: 10px;
+        padding: 12px 14px; max-width: 260px;
+        font-size: 12px; line-height: 1.6; color: #26313b;
+        box-shadow: 0 4px 16px rgba(30, 40, 50, 0.12);
+      }
+      #selection .muted { color: #7b8792; }
+      #selection .warn { color: #b4402a; font-weight: 600; }
+      #selection .ok { color: #2f7d5f; font-weight: 600; }
       #ui .hint { font-size: 11px; color: #7b8792; line-height: 1.5; margin-top: 4px; }
     </style>
   </head>
@@ -34,12 +63,29 @@
     <div id="app"></div>
     <div id="ui">
       <h1>Welding Shop Planner</h1>
-      <div class="dims">48' × 105' &middot; 18' eave / 25' ridge</div>
+      <div class="dims" id="dims"></div>
       <button id="viewToggle">Switch to plan view</button>
+      <div class="section">View from</div>
+      <div class="row" id="viewPresets"></div>
+      <button id="labelToggle">Hide dimensions and labels</button>
+      <div class="section">Forklift path</div>
+      <div class="row">
+        <button id="pathDraw">Draw path</button>
+        <button id="pathPlay">Play</button>
+        <button id="pathClear">Clear</button>
+      </div>
+      <div class="hint" id="pathHint">No path yet</div>
       <div class="hint" id="hint">
         Left-drag: orbit &middot; Right-drag: pan<br />Scroll: zoom
       </div>
+      <div class="hint">
+        Hover anything for dimensions &middot; click a door to open it<br />
+        Drag equipment to move &middot; <b>R</b> rotate 90&deg; &middot; <b>Shift+R</b> 15&deg;<br />
+        Select the forklift and drive it with the <b>arrow keys</b>
+      </div>
     </div>
+    <div id="selection"></div>
+    <div id="tooltip"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

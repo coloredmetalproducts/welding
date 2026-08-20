@@ -1,6 +1,6 @@
 # Welding Shop 3D Planner — Phased Build Plan
 
-An interactive, browser-based 3D model of our 48' × 105' clear-span metal building, used for
+An interactive, browser-based 3D model of our 50' × 105' clear-span metal building, used for
 space planning, workflow experiments, and material-flow simulation as we convert it into the
 new welding/fab shop.
 
@@ -42,7 +42,7 @@ Grid default 1', placement snap default 6" (adjustable).
 
 ```
 data/
-  building.json      — shell: 48 × 105 footprint, eave/ridge heights, wall openings
+  building.json      — shell: 50 × 105 footprint, eave/ridge heights, wall openings
                        (garage doors, man doors), ramp geometry, mezzanine geometry
   catalog.json       — equipment definitions: footprint, height, color, mobility
                        (fixed | rolling | driven), parametric options (rack bays, etc.)
@@ -62,10 +62,17 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 > *Deliverable: walk around inside an accurate empty building in the browser.*
 
 - Vite + TypeScript + Three.js project scaffold, npm scripts, README.
-- 48' × 105' slab, walls, gabled roof — **18' eave, 25' ridge** (ridge assumed to run along
-  the 105' length, standard for a clear-span metal building).
+- **Footprint is a polygon, not a rectangle:** a 50' × 105' envelope with corner bites
+  taken out of it. The polygon drives the slab, roof panes, wall segments and floor grid, so
+  they stay consistent. **Built: 15' × 13' bite at the rear-left corner → 5,055 sq ft floor.**
+- Walls, gabled roof — **18' eave, 25' ridge**, ridge running along the 105' length. Each
+  wall's top follows the roof underside, so walls across the ridge get a gable peak and
+  walls along it get a flat top, with no special-casing.
 - Orbit / pan / zoom camera; **top-down orthographic "plan view" toggle** (this is the view
-  we'll actually plan in half the time).
+  we'll actually plan in half the time), standard elevation presets, and a toggle to hide all
+  dimensions and labels for a clean look.
+- **Everything is hoverable** for its dimensions, and **doors are opened by clicking them**
+  directly in the scene rather than from a control panel.
 - Walls and roof auto-fade when the camera is outside so the interior is always visible.
 - 1' floor grid with 5' major lines; N/S/E/W + dimension labels on the slab edges.
 - Clean lighting, sky/ground backdrop.
@@ -73,24 +80,71 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 ### Phase 2 — Building Features (doors, ramp, mezzanine)
 > *Deliverable: the real building, driven entirely by `building.json`.*
 
-- **Garage doors:** parametric — wall, offset, width, height. Rendered with panel lines,
-  open/closed toggle (slides up). Placeholder: 2 doors, 14'×14', until real dims arrive.
-- Man doors (parametric, same system).
-- **Ramp** to the adjacent building: parametric slope/width/landing; stub of the neighboring
-  building wall so the connection reads correctly. (Dims TBD.)
-- **Mezzanine:** parametric platform (footprint, deck height, stair location, railing).
-  Clearance under it is honored by the placement system. (Dims TBD.)
+- **Garage doors:** parametric — wall, corner the offset is measured from, width, height.
+  Rendered with section lines and an open/closed toggle (lifts and lays back under the
+  ceiling like the real one). **Built: 24'W × 10'H bay door, 27' off the front-right corner.**
+- **Man doors:** parametric, same system, with inswinging leaves.
+  **Built: two 36" inswinging leaves (6'-0" total), 15' off the front-left corner.**
+- **Plain openings:** framed pass-throughs with no leaf, and an optional sill height so an
+  opening can start above the floor. **Built: 7' × 9' opening at the head of the ramp, sill
+  33" up at the adjacent building's floor level.**
+- **Ramp** from the adjacent building: parametric wall/offset/width/run/rise. It runs
+  *into* the shop — the neighbouring building's floor is higher, so the deck is highest at
+  the wall and falls to our floor level inboard.
+  **Built: 7' wide, 12' run, 33" rise (23% grade), on the left end wall 5'-7" off the
+  cinderblock notch. Costs 84 sq ft of sloped floor.**
+- **Unusable areas:** obstructions positioned from a named corner by an offset along each
+  axis, solid in 3D and hatched on the floor in plan, optionally capped below the roof.
+  **Built: 6' × 9' cinderblock notch against the cut corner (54 sq ft).**
+- **Mezzanine:** parametric deck that wraps whatever it can't sit on — envelope cutouts
+  aren't floor, and obstructions pass through it — plus 4x4 perimeter posts.
+  **Built: rear-left corner, 19'-3" × 25'-0" gross wrapping both notches → 232 sq ft of
+  deck. 2x8 joists + ¼" ply: 81" clear below, deck top at 7'-5". 25 posts at 6' (assumed).**
+- **Sloping site grade:** the slab stands proud of the exterior grade by different amounts,
+  and the grade is a *profile* along the front rather than one number — it falls from the
+  dock end toward the bay door. **Built: 33" at the dock/ramp end, 49" at the bay door, 6"
+  at the rear.** The ground is a sampled grid following that surface, with the gravel yard
+  carried as vertex colour.
+- **Exterior concrete:** docks and ramps outside the wall, one shape covering both — a wedge
+  whose far edge matches its near edge is a flat slab. **Built: 16' × 40' dock at the front-left
+  corner, surface level with the interior floor; 6' × 19' man-door ramp falling 33" to grade
+  (14% grade).**
 - Every TBD item flagged visually (hatched material) until real dimensions replace it.
 
 ### Phase 3 — Equipment Catalog + Click-and-Move Placement
 > *Deliverable: drag equipment around the floor and try layouts.*
 
-Interaction model:
-- Click palette → item appears at cursor → click to place.
-- Click-and-drag to move (constrained to floor); **R** or handle to rotate 15°/90° steps;
-  snap-to-grid; **D** duplicate; **Del** delete; Esc cancels.
-- Items tint **red on overlap** with equipment, walls, or mezzanine posts.
-- Optional per-item **clearance halo** (e.g. 3' work zone around a table) shown as a floor ring.
+**Started.** Machines come from `data/catalog.json`, placements from `data/layout.json`.
+
+- Click-and-drag to move, snapped to 6"; **R** rotates 90°, **Shift+R** 15°.
+- **Working-clearance envelope:** a dashed floor outline projecting off each end of the
+  machine's feed axis. It turns red the moment the clearance stops fitting — which is the
+  whole point: it answers "can I actually cut 24' stock standing here?" at a glance.
+- Placement is checked against the building continuously: outside the walls, over unusable
+  floor, on a ramp, or under too little headroom all flag in the selection panel, and the
+  machine itself tints red.
+- **Feed axis is explicit per machine**, not inferred from the shape — plenty of machines are
+  fed across their short side, as the Marvel is.
+- **Built: Marvel Series 81 band saw** — 5' × 8' × 7', fed through the 5' side, 24' clearance
+  each end (a 53' × 8' envelope).
+- **Built: forklift** — 4' × 12' × 7', drivable, with an operator aboard.
+- **Built: material rack** — parametric cantilever rack. 20' of frame in 5' bays, arms 4'
+  apart, 5' deep, 12' tall, with the stored 24' stock drawn on the arms so its 2' overhang
+  past each end of the frame reads. Two placed along the rear wall.
+
+Still to do: palette to add items, duplicate, delete, per-item clearance halos.
+
+### Phase 5 — Forklift movement — *started early*
+
+- **Arrow-key driving:** select the forklift and drive it. Up/down move along its heading,
+  left/right steer. It sits on whatever surface is under it and pitches to the slope, so it
+  visibly climbs the ramps and rolls out onto the dock.
+- **Draw a path and play it:** click *Draw path*, click points on the floor, then *Play*. The
+  truck tracks the line at a constant speed and eases round corners rather than snapping.
+- Warnings are mobility-aware: a forklift is *meant* to leave the building and climb ramps, so
+  it isn't flagged for either — but low headroom and blocked floor still are.
+
+Still to do: the 24' load on the forks, the swept envelope, and collision reporting.
 
 Starter catalog (dims are typical placeholders — we'll true them up to your actual iron):
 
@@ -102,9 +156,9 @@ Starter catalog (dims are typical placeholders — we'll true them up to your ac
 | Shear | 12' × 7' | fixed |
 | Ironworker | 4' × 4' | fixed |
 | Cutting table (plasma/oxy) | 6' × 12' (placeholder) | fixed |
-| Band/cold saw + infeed | 6' × 4' (+ material clearance zone) | fixed |
-| **Material rack (parametric)** | 20' wide × 5' deep × up to 12' tall, vertical bays 4'–5' wide — holds 24' stock (2' overhang each end, shown) | movable |
-| Forklift | ~8' × 4' (+ forks) | driven (Phase 5) |
+| **Marvel Series 81 band saw** ✅ built | 5' × 8' × 7' tall, 24' clearance each end | fixed |
+| **Material rack (parametric)** ✅ built | 20' wide × 5' deep × 12' tall, 5' bays, 4' level spacing — holds 24' stock, 2' overhang each end shown | rolling |
+| **Forklift** ✅ built | 4' × 12' (incl. forks) × 7' | driven |
 | Pallet / staging marker | 4' × 4' | movable |
 | Person figure (scale check) | — | movable |
 
@@ -147,10 +201,23 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 ## Dimensions Needed (drop in as we go — placeholders until then)
 
 - [x] Eave height 18', ridge (center) height 25'
-- [ ] Garage doors: count, which wall, offsets, W × H each
-- [ ] Man doors: locations
-- [ ] Ramp: which wall, width, elevation change, length, landing; adjacent building position
-- [ ] Mezzanine: footprint, deck height, stair location, what's under/on it
+- [x] Front-wall bay door: 24'W × 10'H, 27' off the right corner
+- [x] Front-wall man doors: 2 × 36" inswinging, 15' off the left corner (height 7'-0" assumed)
+- [ ] Any other garage/man doors on the rear or end walls?
+- [ ] Which compass direction does the front wall face?
+- [x] Ramp: internal, left end wall, 7' wide, 12' run, 33" rise, 5'-7" off the notch
+      (14'-7" off the cut corner, since the left end wall now runs only 37')
+- [x] Rear-left corner: 15' × 13' is outside the building envelope (not an obstruction)
+- [x] Cinderblock notch: 6' × 9', hard against the cut corner, 13' off the envelope rear
+- [x] Ramp opening: 7' wide × 9' tall, sill 33" up (top of ramp), left end wall
+- [x] Grade: 49" below the slab at the front, 6" at the rear
+- [x] Mezzanine: footprint, 81" clear below, 8" deck, 4x4 posts
+- [x] Exterior man-door ramp: 19' long, falling 33" to grade (width assumed 6')
+- [x] Raised dock: 16' × 40' concrete at the front-left corner, level with the floor
+- [x] Front yard is gravel except the dock and ramp, which are concrete
+- [x] The 24' bay door is served **as a loading dock** — no floor-level access from the yard
+- [x] Exterior ramp width confirmed close enough at 6'
+- [ ] Mezzanine stairs and railing; post spacing 6' assumed
 - [ ] Real equipment list w/ measured footprints (brake, shear, ironworker, saw, cutting table, tables, welders)
 - [x] Rack spec: 20' wide × 5' deep, up to 12' tall, bays 4'–5' wide, holds 24' stock
 - [ ] Forklift model/size (affects turning radius) and typical load lengths

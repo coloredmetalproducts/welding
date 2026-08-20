@@ -1,14 +1,155 @@
 {
   "name": "Main Shop",
-  "comment": "All dimensions in feet. X axis runs along the 105' length, Z along the 48' width, Y is up. Ridge runs along the length.",
+  "comment": "All dimensions in FEET. X runs along the 105' length, Z along the 50' width, Y is up. The 'front' wall is at z=0. Left/right are always AS SEEN FROM OUTSIDE facing the wall in question - so the left end wall is at x=105.",
   "length": 105,
-  "width": 48,
+  "width": 50,
   "eaveHeight": 18,
   "ridgeHeight": 25,
+  "openings": [
+    {
+      "id": "bay-1",
+      "label": "24' bay door",
+      "kind": "overhead",
+      "wall": "front",
+      "fromCorner": "right",
+      "offset": 27,
+      "width": 24,
+      "height": 10,
+      "note": "Loading dock only - no floor-level access from the yard (49\" above grade)"
+    },
+    {
+      "id": "man-1",
+      "label": "Double man door (2 x 36\")",
+      "kind": "man-double",
+      "wall": "front",
+      "fromCorner": "left",
+      "offset": 15,
+      "width": 6,
+      "leafWidth": 3,
+      "height": 7,
+      "swing": "in",
+      "note": "Height 7'-0\" assumed - confirm."
+    },
+    {
+      "id": "ramp-opening",
+      "label": "Ramp opening",
+      "kind": "open",
+      "wall": "leftEnd",
+      "fromCorner": "left",
+      "offset": 14.5833,
+      "width": 7,
+      "sill": 2.75,
+      "height": 9,
+      "note": "9'-0\" clear measured up from the top of the ramp; aligned with the ramp"
+    }
+  ],
+  "obstructions": [
+    {
+      "id": "notch-cb",
+      "label": "Cinderblock notch",
+      "note": "Walled to the roof - inaccessible, unusable space",
+      "corner": "rearLeft",
+      "offsetWidth": 13,
+      "alongLength": 6,
+      "alongWidth": 9
+    }
+  ],
+  "ramps": [
+    {
+      "id": "ramp-left",
+      "label": "Ramp to adjacent building",
+      "note": "Ramps down INTO the shop; run is the floor measurement, not the slope",
+      "wall": "leftEnd",
+      "fromCorner": "left",
+      "offset": 14.5833,
+      "offsetComment": "14'-7\" off the left corner of the left end wall (which is now the cut corner at 13' in): 9' of cinderblock notch plus the 5'-7\" measured off the cinderblock wall.",
+      "width": 7,
+      "run": 12,
+      "rise": 2.75
+    }
+  ],
   "tbd": {
-    "garageDoors": "count, wall, offsets, W x H — Phase 2",
-    "manDoors": "locations — Phase 2",
-    "ramp": "wall, width, slope, adjacent building — Phase 2",
-    "mezzanine": "footprint, deck height, stairs — Phase 2"
+    "mezzanineStairs": "stair location and railing; post spacing 6' assumed",
+    "gravelExtent": "gravel yard extent is indicative",
+    "rampWidth": "exterior man door ramp is a little over 6' - refine if it matters"
+  },
+  "cutouts": [
+    {
+      "id": "cut-rear-left",
+      "label": "Rear-left corner not part of building",
+      "corner": "rearLeft",
+      "alongLength": 15,
+      "alongWidth": 13
+    }
+  ],
+  "gradeComment": "Front grade is not level: the slab stands 33\" proud at the dock/ramp end and 49\" at the bay door - the 'slight grade drop' between them. Rear is about 6\". The transition stations (x=51 and x=87) are interpolated, not surveyed.",
+  "mezzanines": [
+    {
+      "id": "mezz-rear-left",
+      "label": "Mezzanine",
+      "note": "2x8 joists + 1/4\" ply on 4x4 posts. Post spacing 6' assumed; stairs and railing not yet given.",
+      "corner": "rearLeft",
+      "alongLength": 19.25,
+      "alongWidth": 25,
+      "clearHeight": 6.75,
+      "deckDepth": 0.6667,
+      "postSize": 0.2917,
+      "postSpacing": 6
+    }
+  ],
+  "grade": {
+    "front": [
+      {
+        "x": 0,
+        "drop": 4.0833
+      },
+      {
+        "x": 51,
+        "drop": 4.0833
+      },
+      {
+        "x": 87,
+        "drop": 2.75
+      },
+      {
+        "x": 105,
+        "drop": 2.75
+      }
+    ],
+    "rear": 0.5
+  },
+  "exterior": [
+    {
+      "id": "dock-front",
+      "label": "Raised dock",
+      "note": "Concrete, surface level with the interior floor, 33\" above grade. Sketched as 16' wide; narrowed to 15' so it stops at the man door rather than running 1' across the opening.",
+      "kind": "dock",
+      "wall": "front",
+      "fromCorner": "left",
+      "offset": 0,
+      "width": 15,
+      "depth": 40,
+      "topAtWall": 0,
+      "topAtFar": 0
+    },
+    {
+      "id": "ramp-man-door",
+      "label": "Man door ramp",
+      "note": "Concrete, centred on the man door and butting the dock. Slightly wider than 6' in reality; 6' is close enough for planning.",
+      "kind": "ramp",
+      "wall": "front",
+      "fromCorner": "left",
+      "offset": 15,
+      "width": 6,
+      "depth": 19,
+      "topAtWall": 0,
+      "topAtFar": -2.75
+    }
+  ],
+  "gravelYard": {
+    "x0": -20,
+    "x1": 125,
+    "z0": -70,
+    "z1": 0
   }
 }

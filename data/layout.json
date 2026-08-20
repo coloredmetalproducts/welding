@@ -1,0 +1,30 @@
+{
+  "name": "Working layout",
+  "comment": "Placed equipment. Positions are the centre of the footprint, in world feet; rotation is degrees about vertical, 0 putting the feed axis along the building length.",
+  "items": [
+    {
+      "catalogId": "band-saw",
+      "x": 45,
+      "z": 30,
+      "rotation": 0
+    },
+    {
+      "catalogId": "forklift",
+      "x": 40,
+      "z": 14,
+      "rotation": 90
+    },
+    {
+      "catalogId": "material-rack",
+      "x": 20,
+      "z": 47,
+      "rotation": 0
+    },
+    {
+      "catalogId": "material-rack",
+      "x": 72,
+      "z": 47,
+      "rotation": 0
+    }
+  ]
+}
