@@ -81,7 +81,7 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
   Rendered with section lines and an open/closed toggle (lifts and lays back under the
   ceiling like the real one). **Built: 24'W × 10'H bay door, 27' off the front-right corner.**
 - **Man doors:** parametric, same system, with inswinging leaves.
-  **Built: two 42" inswinging leaves (7'-0" total), 15' off the front-left corner.**
+  **Built: two 36" inswinging leaves (6'-0" total), 15' off the front-left corner.**
 - **Plain openings:** framed pass-throughs with no leaf, and an optional sill height so an
   opening can start above the floor. **Built: 7' × 9' opening at the head of the ramp, sill
   33" up at the adjacent building's floor level.**
