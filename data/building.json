@@ -1,0 +1,14 @@
+{
+  "name": "Main Shop",
+  "comment": "All dimensions in feet. X axis runs along the 105' length, Z along the 48' width, Y is up. Ridge runs along the length.",
+  "length": 105,
+  "width": 48,
+  "eaveHeight": 18,
+  "ridgeHeight": 25,
+  "tbd": {
+    "garageDoors": "count, wall, offsets, W x H — Phase 2",
+    "manDoors": "locations — Phase 2",
+    "ramp": "wall, width, slope, adjacent building — Phase 2",
+    "mezzanine": "footprint, deck height, stairs — Phase 2"
+  }
+}

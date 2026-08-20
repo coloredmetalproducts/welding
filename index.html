@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Welding Shop 3D Planner</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; overflow: hidden; }
+      body { font-family: system-ui, -apple-system, sans-serif; background: #dfe7ee; }
+      #app { position: fixed; inset: 0; }
+      #app canvas { display: block; }
+      #ui {
+        position: fixed; top: 16px; left: 16px; z-index: 10;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid #c3ccd4; border-radius: 10px;
+        padding: 14px 16px; width: 230px;
+        box-shadow: 0 4px 16px rgba(30, 40, 50, 0.12);
+      }
+      #ui h1 { font-size: 15px; font-weight: 700; color: #26313b; }
+      #ui .dims { font-size: 12px; color: #5b6771; margin: 4px 0 12px; }
+      #ui button {
+        display: block; width: 100%; padding: 8px 10px; margin-bottom: 8px;
+        font-size: 13px; font-weight: 600; color: #26313b;
+        background: #eef2f5; border: 1px solid #b9c3cc; border-radius: 7px;
+        cursor: pointer;
+      }
+      #ui button:hover { background: #e2e9ef; }
+      #ui button.active { background: #2c6e9e; border-color: #2c6e9e; color: #fff; }
+      #ui .hint { font-size: 11px; color: #7b8792; line-height: 1.5; margin-top: 4px; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="ui">
+      <h1>Welding Shop Planner</h1>
+      <div class="dims">48' × 105' &middot; 18' eave / 25' ridge</div>
+      <button id="viewToggle">Switch to plan view</button>
+      <div class="hint" id="hint">
+        Left-drag: orbit &middot; Right-drag: pan<br />Scroll: zoom
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

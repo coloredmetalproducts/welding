@@ -62,7 +62,8 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 > *Deliverable: walk around inside an accurate empty building in the browser.*
 
 - Vite + TypeScript + Three.js project scaffold, npm scripts, README.
-- 48' × 105' slab, walls, gabled roof (assumed **16' eave / low-slope gable — TBD**).
+- 48' × 105' slab, walls, gabled roof — **18' eave, 25' ridge** (ridge assumed to run along
+  the 105' length, standard for a clear-span metal building).
 - Orbit / pan / zoom camera; **top-down orthographic "plan view" toggle** (this is the view
   we'll actually plan in half the time).
 - Walls and roof auto-fade when the camera is outside so the interior is always visible.
@@ -100,8 +101,9 @@ Starter catalog (dims are typical placeholders — we'll true them up to your ac
 | Press brake | 12' × 6' | fixed |
 | Shear | 12' × 7' | fixed |
 | Ironworker | 4' × 4' | fixed |
+| Cutting table (plasma/oxy) | 6' × 12' (placeholder) | fixed |
 | Band/cold saw + infeed | 6' × 4' (+ material clearance zone) | fixed |
-| **Material rack (parametric)** | ~20' wide × 5' deep, N vertical bays, M levels — holds 24' stock (overhang shown) | movable |
+| **Material rack (parametric)** | 20' wide × 5' deep × up to 12' tall, vertical bays 4'–5' wide — holds 24' stock (2' overhang each end, shown) | movable |
 | Forklift | ~8' × 4' (+ forks) | driven (Phase 5) |
 | Pallet / staging marker | 4' × 4' | movable |
 | Person figure (scale check) | — | movable |
@@ -144,13 +146,13 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 
 ## Dimensions Needed (drop in as we go — placeholders until then)
 
-- [ ] Eave height & roof pitch; ridge direction
+- [x] Eave height 18', ridge (center) height 25'
 - [ ] Garage doors: count, which wall, offsets, W × H each
 - [ ] Man doors: locations
 - [ ] Ramp: which wall, width, elevation change, length, landing; adjacent building position
 - [ ] Mezzanine: footprint, deck height, stair location, what's under/on it
-- [ ] Real equipment list w/ measured footprints (brake, shear, ironworker, saw, tables, welders)
-- [ ] Rack final spec (confirm: ~20' wide × 5' deep, bay/level counts, for 24' stock?)
+- [ ] Real equipment list w/ measured footprints (brake, shear, ironworker, saw, cutting table, tables, welders)
+- [x] Rack spec: 20' wide × 5' deep, up to 12' tall, bays 4'–5' wide, holds 24' stock
 - [ ] Forklift model/size (affects turning radius) and typical load lengths
 
 ## Things Possibly Being Forgotten (flagging for discussion)
