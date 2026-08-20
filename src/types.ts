@@ -132,7 +132,14 @@ export interface CatalogItem {
    */
   feedAxis: 'width' | 'length';
   /** How to mass it in 3D. Defaults to a generic machine block. */
-  shape?: 'machine' | 'forklift';
+  shape?: 'machine' | 'forklift' | 'rack';
+  /** Cantilever rack build-up. Bays run along the feed axis, levels up it. */
+  rack?: {
+    bays: number;
+    levels: number;
+    /** Stock length carried, so the overhang past the frame can be drawn. */
+    stockLength?: number;
+  };
   color: string;
   mobility: 'fixed' | 'rolling' | 'driven';
   /**

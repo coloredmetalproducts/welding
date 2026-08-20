@@ -156,6 +156,114 @@ function forkliftBody(item: CatalogItem): THREE.Group {
     bodyCentre,
     item.height - 0.15,
   );
+
+  // The operator. Outlines are skipped here - edge lines look wrong on a person.
+  const smooth = (geometry: THREE.BufferGeometry, material: THREE.Material, x: number, y: number) => {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, 0);
+    mesh.castShadow = true;
+    group.add(mesh);
+  };
+  const skin = new THREE.MeshStandardMaterial({ color: 0xe8b189, roughness: 0.8 });
+  const hair = new THREE.MeshStandardMaterial({ color: 0xb4501f, roughness: 0.9 });
+  const shirt = new THREE.MeshStandardMaterial({ color: 0x3d6f8c, roughness: 0.85 });
+  const seatX = bodyCentre - bodyLength * 0.04;
+  const seatY = item.height * 0.42;
+
+  smooth(new THREE.CylinderGeometry(0.42, 0.52, 1.5, 12), shirt, seatX, seatY + 0.75);
+  smooth(new THREE.SphereGeometry(0.42, 16, 12), skin, seatX, seatY + 1.86);
+  smooth(
+    new THREE.SphereGeometry(0.45, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.6),
+    hair,
+    seatX - 0.04,
+    seatY + 1.9,
+  );
+  // Cigarette, lit end forward.
+  smooth(
+    new THREE.CylinderGeometry(0.045, 0.045, 0.52, 8).rotateZ(Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0xf4f1e8, roughness: 0.9 }),
+    seatX + 0.62,
+    seatY + 1.78,
+  );
+  smooth(
+    new THREE.CylinderGeometry(0.05, 0.05, 0.09, 8).rotateZ(Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0xd8541f, emissive: 0xc23a10 }),
+    seatX + 0.9,
+    seatY + 1.78,
+  );
+  const smoke = new THREE.MeshStandardMaterial({
+    color: 0xdfe3e6,
+    transparent: true,
+    opacity: 0.42,
+    roughness: 1,
+  });
+  for (const [dx, dy, r] of [[1.05, 2.1, 0.13], [1.2, 2.5, 0.19], [1.32, 2.95, 0.25]] as const) {
+    smooth(new THREE.SphereGeometry(r, 10, 8), smoke, seatX + dx, seatY + dy);
+  }
+  return group;
+}
+
+/**
+ * Cantilever rack: columns along the feed axis with arms cantilevered off them,
+ * and the stored stock drawn on the arms so its overhang past the frame reads.
+ */
+function rackBody(item: CatalogItem): THREE.Group {
+  const { along, across } = feedFootprint(item);
+  const bays = Math.max(1, item.rack?.bays ?? 4);
+  const levels = Math.max(1, item.rack?.levels ?? 3);
+  const stockLength = item.rack?.stockLength;
+
+  const group = new THREE.Group();
+  const steel = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(item.color),
+    roughness: 0.6,
+    metalness: 0.35,
+  });
+  const stockMaterial = new THREE.MeshStandardMaterial({
+    color: 0x8d939a,
+    roughness: 0.5,
+    metalness: 0.6,
+  });
+
+  const add = (
+    geometry: THREE.BufferGeometry,
+    material: THREE.Material,
+    x: number,
+    y: number,
+    z: number,
+  ) => {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    group.add(mesh);
+    group.add(
+      new THREE.LineSegments(
+        new THREE.EdgesGeometry(geometry),
+        new THREE.LineBasicMaterial({ color: OUTLINE_COLOR }),
+      ).translateX(x).translateY(y).translateZ(z),
+    );
+  };
+
+  // Columns stand at the back so the arms cantilever into the aisle.
+  const columnZ = across / 2 - 0.25;
+  const baySpacing = along / bays;
+  for (let i = 0; i <= bays; i++) {
+    const x = -along / 2 + i * baySpacing;
+    add(new THREE.BoxGeometry(0.4, item.height, 0.4), steel, x, item.height / 2, columnZ);
+    add(new THREE.BoxGeometry(0.55, 0.3, across), steel, x, 0.15, 0);
+    for (let level = 1; level <= levels; level++) {
+      const y = (item.height / levels) * level;
+      add(new THREE.BoxGeometry(0.3, 0.28, across * 0.88), steel, x, y, -0.1);
+    }
+  }
+
+  // Stock lying on the arms, running past the frame at both ends.
+  if (stockLength) {
+    for (let level = 1; level <= levels; level++) {
+      const y = (item.height / levels) * level + 0.34;
+      add(new THREE.BoxGeometry(stockLength, 0.4, across * 0.5), stockMaterial, 0, y, -0.3);
+    }
+  }
   return group;
 }
 
@@ -165,7 +273,12 @@ export function buildPlacement(
   site: SiteQuery,
 ): Placement {
   const group = new THREE.Group();
-  const body = catalog.shape === 'forklift' ? forkliftBody(catalog) : machineBody(catalog);
+  const body =
+    catalog.shape === 'forklift'
+      ? forkliftBody(catalog)
+      : catalog.shape === 'rack'
+        ? rackBody(catalog)
+        : machineBody(catalog);
   group.add(body);
 
   const bodyMaterials: THREE.MeshStandardMaterial[] = [];

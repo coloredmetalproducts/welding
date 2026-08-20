@@ -127,7 +127,10 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
   fed across their short side, as the Marvel is.
 - **Built: Marvel Series 81 band saw** — 5' × 8' × 7', fed through the 5' side, 24' clearance
   each end (a 53' × 8' envelope).
-- **Built: forklift** — 4' × 12' × 7', drivable.
+- **Built: forklift** — 4' × 12' × 7', drivable, with an operator aboard.
+- **Built: material rack** — parametric cantilever rack. 20' of frame in 5' bays, arms 4'
+  apart, 5' deep, 12' tall, with the stored 24' stock drawn on the arms so its 2' overhang
+  past each end of the frame reads. Two placed along the rear wall.
 
 Still to do: palette to add items, duplicate, delete, per-item clearance halos.
 
@@ -154,8 +157,8 @@ Starter catalog (dims are typical placeholders — we'll true them up to your ac
 | Ironworker | 4' × 4' | fixed |
 | Cutting table (plasma/oxy) | 6' × 12' (placeholder) | fixed |
 | **Marvel Series 81 band saw** ✅ built | 5' × 8' × 7' tall, 24' clearance each end | fixed |
-| **Material rack (parametric)** | 20' wide × 5' deep × up to 12' tall, vertical bays 4'–5' wide — holds 24' stock (2' overhang each end, shown) | movable |
-| Forklift | ~8' × 4' (+ forks) | driven (Phase 5) |
+| **Material rack (parametric)** ✅ built | 20' wide × 5' deep × 12' tall, 5' bays, 4' level spacing — holds 24' stock, 2' overhang each end shown | rolling |
+| **Forklift** ✅ built | 4' × 12' (incl. forks) × 7' | driven |
 | Pallet / staging marker | 4' × 4' | movable |
 | Person figure (scale check) | — | movable |
 

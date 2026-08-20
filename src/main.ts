@@ -261,9 +261,11 @@ function describe(placement: Placement): string {
   return [
     `<strong>${def.label}</strong>`,
     `${formatFeet(def.width)} × ${formatFeet(def.length)} × ${formatFeet(def.height)} tall`,
-    ...(def.clearance
-      ? [`Feeds through the ${formatFeet(feedFootprint(def).along)} side`]
-      : []),
+    ...(def.rack
+      ? [`${def.rack.bays} bays · ${def.rack.levels} levels`]
+      : def.clearance
+        ? [`Feeds through the ${formatFeet(feedFootprint(def).along)} side`]
+        : []),
     `Rotated ${Math.round(placed.rotation)}°`,
     ...(def.clearance ? [`<span class="muted">${def.clearance.label}</span>`] : []),
     ...problems.map((p) => `<span class="warn">${p}</span>`),

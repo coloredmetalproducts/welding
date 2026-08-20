@@ -28,6 +28,27 @@
       "shape": "forklift",
       "color": "#c08a2e",
       "mobility": "driven"
+    },
+    {
+      "id": "material-rack",
+      "label": "Material rack",
+      "note": "Cantilever rack: 20' of frame in 5' bays, arms 4' apart, 5' deep. Holds 24' stock, which overhangs 2' each end.",
+      "width": 20,
+      "length": 5,
+      "height": 12,
+      "feedAxis": "width",
+      "shape": "rack",
+      "color": "#8a5a3c",
+      "mobility": "rolling",
+      "rack": {
+        "bays": 4,
+        "levels": 3,
+        "stockLength": 24
+      },
+      "clearance": {
+        "eachEnd": 2,
+        "label": "24' stock overhangs 2' each end"
+      }
     }
   ]
 }

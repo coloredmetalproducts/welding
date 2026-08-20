@@ -5,7 +5,7 @@
     {
       "catalogId": "band-saw",
       "x": 45,
-      "z": 42,
+      "z": 30,
       "rotation": 0
     },
     {
@@ -13,6 +13,18 @@
       "x": 40,
       "z": 14,
       "rotation": 90
+    },
+    {
+      "catalogId": "material-rack",
+      "x": 20,
+      "z": 47,
+      "rotation": 0
+    },
+    {
+      "catalogId": "material-rack",
+      "x": 72,
+      "z": 47,
+      "rotation": 0
     }
   ]
 }
