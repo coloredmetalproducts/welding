@@ -114,12 +114,18 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 ### Phase 3 — Equipment Catalog + Click-and-Move Placement
 > *Deliverable: drag equipment around the floor and try layouts.*
 
-Interaction model:
-- Click palette → item appears at cursor → click to place.
-- Click-and-drag to move (constrained to floor); **R** or handle to rotate 15°/90° steps;
-  snap-to-grid; **D** duplicate; **Del** delete; Esc cancels.
-- Items tint **red on overlap** with equipment, walls, or mezzanine posts.
-- Optional per-item **clearance halo** (e.g. 3' work zone around a table) shown as a floor ring.
+**Started.** Machines come from `data/catalog.json`, placements from `data/layout.json`.
+
+- Click-and-drag to move, snapped to 6"; **R** rotates 90°, **Shift+R** 15°.
+- **Working-clearance envelope:** a dashed floor outline projecting off each end of the
+  machine's feed axis. It turns red the moment the clearance stops fitting — which is the
+  whole point: it answers "can I actually cut 24' stock standing here?" at a glance.
+- Placement is checked against the building continuously: outside the walls, over unusable
+  floor, on a ramp, or under too little headroom all flag in the selection panel, and the
+  machine itself tints red.
+- **Built: Marvel Series 81 band saw** — 5' × 8' × 7', with 24' of clearance each end.
+
+Still to do: palette to add items, duplicate, delete, per-item clearance halos.
 
 Starter catalog (dims are typical placeholders — we'll true them up to your actual iron):
 
@@ -131,7 +137,7 @@ Starter catalog (dims are typical placeholders — we'll true them up to your ac
 | Shear | 12' × 7' | fixed |
 | Ironworker | 4' × 4' | fixed |
 | Cutting table (plasma/oxy) | 6' × 12' (placeholder) | fixed |
-| Band/cold saw + infeed | 6' × 4' (+ material clearance zone) | fixed |
+| **Marvel Series 81 band saw** ✅ built | 5' × 8' × 7' tall, 24' clearance each end | fixed |
 | **Material rack (parametric)** | 20' wide × 5' deep × up to 12' tall, vertical bays 4'–5' wide — holds 24' stock (2' overhang each end, shown) | movable |
 | Forklift | ~8' × 4' (+ forks) | driven (Phase 5) |
 | Pallet / staging marker | 4' × 4' | movable |

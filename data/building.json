@@ -122,12 +122,12 @@
     {
       "id": "dock-front",
       "label": "Raised dock",
-      "note": "Concrete, surface level with the interior floor, 33\" above grade",
+      "note": "Concrete, surface level with the interior floor, 33\" above grade. Sketched as 16' wide; narrowed to 15' so it stops at the man door rather than running 1' across the opening.",
       "kind": "dock",
       "wall": "front",
       "fromCorner": "left",
       "offset": 0,
-      "width": 16,
+      "width": 15,
       "depth": 40,
       "topAtWall": 0,
       "topAtFar": 0
@@ -135,11 +135,11 @@
     {
       "id": "ramp-man-door",
       "label": "Man door ramp",
-      "note": "Concrete. Slightly wider than 6' in reality; 6' is close enough for planning.",
+      "note": "Concrete, centred on the man door and butting the dock. Slightly wider than 6' in reality; 6' is close enough for planning.",
       "kind": "ramp",
       "wall": "front",
       "fromCorner": "left",
-      "offset": 16,
+      "offset": 15,
       "width": 6,
       "depth": 19,
       "topAtWall": 0,

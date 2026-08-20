@@ -117,6 +117,44 @@ export interface Mezzanine {
   postSize?: number;
 }
 
+/** A machine or fixture that can be placed on the floor. */
+export interface CatalogItem {
+  id: string;
+  label: string;
+  note?: string;
+  /** Across the feed axis. */
+  width: number;
+  /** Along the feed axis - material runs this way through the machine. */
+  length: number;
+  height: number;
+  color: string;
+  mobility: 'fixed' | 'rolling' | 'driven';
+  /**
+   * Working clearance the machine needs beyond its own footprint, projected
+   * off each end of the feed axis - the room to run long stock through it.
+   */
+  clearance?: { eachEnd: number; label: string };
+}
+
+/** One placed instance of a catalog item. */
+export interface PlacedItem {
+  catalogId: string;
+  /** Centre of the footprint, in world feet. */
+  x: number;
+  z: number;
+  /** Rotation about vertical, in degrees. 0 puts the feed axis along X. */
+  rotation: number;
+}
+
+export interface Catalog {
+  items: CatalogItem[];
+}
+
+export interface Layout {
+  name: string;
+  items: PlacedItem[];
+}
+
 export interface BuildingSpec {
   name: string;
   /** Overall envelope, before any corner cutouts. */

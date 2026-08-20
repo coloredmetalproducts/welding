@@ -44,6 +44,19 @@ export interface HoverTarget {
   actionLabel?: () => string;
 }
 
+/**
+ * Point queries against the finished building, so placement can ask whether a
+ * spot is floor, whether it is usable, and how much room there is overhead.
+ */
+export interface SiteQuery {
+  isInside(x: number, z: number): boolean;
+  isBlocked(x: number, z: number): boolean;
+  /** Clear height above the floor: a mezzanine deck if under one, else the roof. */
+  headroomAt(x: number, z: number): number;
+  /** Sloped floor - drivable, but not somewhere to stand a machine. */
+  isSloped(x: number, z: number): boolean;
+}
+
 export interface BuildingModel {
   group: THREE.Group;
   fadePanels: FadePanel[];
@@ -60,6 +73,7 @@ export interface BuildingModel {
   hoverTargets: HoverTarget[];
   footprint: Footprint;
   walls: WallFrame[];
+  site: SiteQuery;
 }
 
 const WALL_COLOR = 0xe3e8ec;
@@ -147,6 +161,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
   const blockedFootprints: Rect[] = [];
   const rampFootprints: Rect[] = [];
   const mezzanineFootprints: Rect[] = [];
+  const mezzanineZones: Array<{ rect: Rect; clearHeight: number }> = [];
   const hoverTargets: HoverTarget[] = [];
 
   const addFading = (
@@ -287,6 +302,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     group.add(built.deck, built.supports, built.hoverMesh);
     planHiddenGroups.push(built.deck);
     mezzanineFootprints.push(built.footprint);
+    mezzanineZones.push({ rect: built.footprint, clearHeight: mez.clearHeight });
     hoverTargets.push({
       mesh: built.hoverMesh,
       title: mez.label,
@@ -343,6 +359,36 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     );
   }
 
+  const within = (rect: Rect, x: number, z: number) =>
+    x >= rect.x0 && x <= rect.x1 && z >= rect.z0 && z <= rect.z1;
+
+  const site: SiteQuery = {
+    isInside(x, z) {
+      // Ray-crossing test against the footprint polygon.
+      const pts = footprint.points;
+      let inside = false;
+      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+        const zi = pts[i].y;
+        const zj = pts[j].y;
+        if (
+          zi > z !== zj > z &&
+          x < ((pts[j].x - pts[i].x) * (z - zi)) / (zj - zi) + pts[i].x
+        ) {
+          inside = !inside;
+        }
+      }
+      return inside;
+    },
+    isBlocked: (x, z) => blockedFootprints.some((rect) => within(rect, x, z)),
+    isSloped: (x, z) => rampFootprints.some((rect) => within(rect, x, z)),
+    headroomAt(x, z) {
+      for (const zone of mezzanineZones) {
+        if (within(zone.rect, x, z)) return zone.clearHeight;
+      }
+      return roofHeightAt(spec, z);
+    },
+  };
+
   return {
     group,
     fadePanels,
@@ -355,6 +401,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     hoverTargets,
     footprint,
     walls,
+    site,
   };
 }
 

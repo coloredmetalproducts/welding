@@ -5,6 +5,10 @@ import { buildBuilding, updatePanelFades, type HoverTarget } from './building';
 import { makeFloorGrid } from './grid';
 import { formatFeet, makeTextSprite } from './labels';
 import { gradeDropAt } from './geometry';
+import { buildPlacement, type Placement } from './equipment';
+import catalogData from '../data/catalog.json';
+import layoutData from '../data/layout.json';
+import type { Catalog, Layout } from './types';
 import type { BuildingSpec } from './types';
 
 // JSON widens string literals, so the spec shape is asserted at the boundary.
@@ -231,16 +235,98 @@ labelToggle.addEventListener('click', () => {
   labelToggle.classList.toggle('active', !labelsVisible);
 });
 
+// -------------------------------------------------------------- equipment
+const catalog = catalogData as unknown as Catalog;
+const layout = layoutData as unknown as Layout;
+const placements: Placement[] = [];
+
+for (const item of layout.items) {
+  const definition = catalog.items.find((entry) => entry.id === item.catalogId);
+  if (!definition) {
+    console.warn(`Layout references unknown catalog item: ${item.catalogId}`);
+    continue;
+  }
+  const placement = buildPlacement(definition, item, building.site);
+  scene.add(placement.group);
+  placements.push(placement);
+}
+
+const selectionPanel = document.getElementById('selection')!;
+let selected: Placement | null = null;
+
+function describe(placement: Placement): string {
+  const { catalog: def, placed } = placement;
+  const problems = placement.check();
+  return [
+    `<strong>${def.label}</strong>`,
+    `${formatFeet(def.width)} × ${formatFeet(def.length)} × ${formatFeet(def.height)} tall`,
+    `Rotated ${Math.round(placed.rotation)}°`,
+    ...(def.clearance ? [`<span class="muted">${def.clearance.label}</span>`] : []),
+    ...problems.map((p) => `<span class="warn">${p}</span>`),
+    ...(problems.length === 0 ? ['<span class="ok">Fits where it stands</span>'] : []),
+  ].join('<br />');
+}
+
+function select(placement: Placement | null): void {
+  selected?.setSelected(false);
+  selected = placement;
+  selected?.setSelected(true);
+  if (!selected) {
+    selectionPanel.style.display = 'none';
+    return;
+  }
+  selectionPanel.style.display = 'block';
+  selectionPanel.innerHTML = describe(selected);
+}
+
+function rotateSelected(step: number): void {
+  if (!selected) return;
+  selected.setRotation(selected.placed.rotation + step);
+  selectionPanel.innerHTML = describe(selected);
+}
+
+window.addEventListener('keydown', (event) => {
+  if (event.key.toLowerCase() !== 'r' || event.metaKey || event.ctrlKey) return;
+  rotateSelected(event.shiftKey ? 15 : 90);
+});
+
+// Dragging happens on the floor plane, which works the same under the
+// perspective and orthographic cameras.
+const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+const dragPoint = new THREE.Vector3();
+const SNAP = 0.5;
+let dragging: { placement: Placement; offsetX: number; offsetZ: number } | null = null;
+
+function floorUnderPointer(): THREE.Vector3 | null {
+  return raycaster.ray.intersectPlane(floorPlane, dragPoint) ? dragPoint : null;
+}
+
 // ----------------------------------------------------------- hover tooltip
 // Door dimensions stay out of the way until asked for: hovering an opening
 // (in either view) reveals its size and the corner it was measured from.
 const tooltip = document.getElementById('tooltip')!;
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
+for (const placement of placements) {
+  building.hoverTargets.push({
+    mesh: placement.hoverMesh,
+    title: placement.catalog.label,
+    lines: [
+      `${formatFeet(placement.catalog.width)} × ${formatFeet(
+        placement.catalog.length,
+      )} × ${formatFeet(placement.catalog.height)} tall`,
+      ...(placement.catalog.clearance ? [placement.catalog.clearance.label] : []),
+    ],
+    note: placement.catalog.note,
+    setHighlight: (on) => placement.setHighlight(on),
+    actionLabel: () => 'Drag to move · R to rotate',
+  });
+}
 const hoverMeshes = building.hoverTargets.map((target) => target.mesh);
+const placementByMesh = new Map(placements.map((p) => [p.hoverMesh, p]));
 
 let hovered: HoverTarget | null = null;
-let dragging = false;
+let orbiting = false;
 
 function clearHover(): void {
   hovered?.setHighlight(false);
@@ -249,9 +335,13 @@ function clearHover(): void {
   renderer.domElement.style.cursor = 'default';
 }
 
-function updateHover(event: PointerEvent): void {
+function setPointer(event: PointerEvent): void {
   pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+}
+
+function updateHover(event: PointerEvent): void {
+  setPointer(event);
   raycaster.setFromCamera(pointer, planView ? planCamera : perspCamera);
   const hit = raycaster.intersectObjects(hoverMeshes, false)[0];
   const target = hit
@@ -291,22 +381,68 @@ function updateHover(event: PointerEvent): void {
 }
 
 renderer.domElement.addEventListener('pointermove', (event) => {
-  if (dragging) return;
+  if (dragging) {
+    setPointer(event);
+    raycaster.setFromCamera(pointer, planView ? planCamera : perspCamera);
+    const hit = floorUnderPointer();
+    if (hit) {
+      const snap = (value: number) => Math.round(value / SNAP) * SNAP;
+      dragging.placement.setPosition(
+        snap(hit.x + dragging.offsetX),
+        snap(hit.z + dragging.offsetZ),
+      );
+      selectionPanel.innerHTML = describe(dragging.placement);
+    }
+    return;
+  }
+  if (orbiting) return;
   updateHover(event);
 });
 let pressed: { x: number; y: number; target: HoverTarget | null } | null = null;
 renderer.domElement.addEventListener('pointerdown', (event) => {
   pressed = { x: event.clientX, y: event.clientY, target: hovered };
-  dragging = true;
+
+  // Pressing on a machine grabs it rather than orbiting the camera. The grab
+  // offset keeps it from jumping so its centre lands under the cursor.
+  const grabbed = hovered ? placementByMesh.get(hovered.mesh) : undefined;
+  if (grabbed && event.button === 0) {
+    setPointer(event);
+    raycaster.setFromCamera(pointer, planView ? planCamera : perspCamera);
+    const hit = floorUnderPointer();
+    if (hit) {
+      select(grabbed);
+      dragging = {
+        placement: grabbed,
+        offsetX: grabbed.placed.x - hit.x,
+        offsetZ: grabbed.placed.z - hit.z,
+      };
+      orbit.enabled = false;
+      planControls.enabled = false;
+      clearHover();
+      return;
+    }
+  }
+
+  orbiting = true;
   clearHover();
 });
 window.addEventListener('pointerup', (event) => {
-  dragging = false;
+  if (dragging) {
+    dragging = null;
+    orbit.enabled = !planView;
+    planControls.enabled = planView;
+    pressed = null;
+    return;
+  }
+  orbiting = false;
   // Only a press that barely moved counts as a click; anything more was a drag
   // of the camera and must not operate a door.
-  if (pressed && pressed.target?.activate) {
+  if (pressed) {
     const moved = Math.hypot(event.clientX - pressed.x, event.clientY - pressed.y);
-    if (moved < 5) pressed.target.activate();
+    if (moved < 5) {
+      if (pressed.target?.activate) pressed.target.activate();
+      else if (!pressed.target) select(null);
+    }
   }
   pressed = null;
   if (event.target === renderer.domElement) updateHover(event as PointerEvent);

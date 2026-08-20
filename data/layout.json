@@ -1,0 +1,12 @@
+{
+  "name": "Working layout",
+  "comment": "Placed equipment. Positions are the centre of the footprint, in world feet; rotation is degrees about vertical, 0 putting the feed axis along the building length.",
+  "items": [
+    {
+      "catalogId": "band-saw",
+      "x": 45,
+      "z": 42,
+      "rotation": 0
+    }
+  ]
+}

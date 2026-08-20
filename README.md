@@ -56,6 +56,11 @@ so the convention is checkable at a glance.
 **Hover anything** — in either view — to see its size and the corner it was measured from.
 The hovered opening highlights so it's clear which one the numbers belong to.
 
+**Drag equipment to move it**, **R** to rotate 90° (**Shift+R** for 15°). Each machine draws
+a dashed working-clearance envelope off its feed axis; it turns red when the clearance stops
+fitting, and the selection panel says why. Equipment lives in
+[`data/catalog.json`](data/catalog.json), placements in [`data/layout.json`](data/layout.json).
+
 **Click a door to open or close it.** In plan view the leaves are hidden and
 each opening shows as an architectural floor symbol: a threshold band, approach lines for
 the overhead door, and swing arcs for the hinged leaves.
