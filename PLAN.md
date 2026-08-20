@@ -93,8 +93,13 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 - **Unusable areas:** obstructions positioned from a named corner by an offset along each
   axis, solid in 3D and hatched on the floor in plan, optionally capped below the roof.
   **Built: 6' × 9' cinderblock notch against the cut corner (54 sq ft).**
-- **Mezzanine:** parametric platform (footprint, deck height, stair location, railing).
-  Clearance under it is honored by the placement system. (Dims TBD.)
+- **Mezzanine:** parametric deck that wraps whatever it can't sit on — envelope cutouts
+  aren't floor, and obstructions pass through it — plus 4x4 perimeter posts.
+  **Built: rear-left corner, 19'-3" × 25'-0" gross wrapping both notches → 232 sq ft of
+  deck. 2x8 joists + ¼" ply: 81" clear below, deck top at 7'-5". 25 posts at 6' (assumed).**
+- **Sloping site grade:** the slab stands proud of the exterior grade by a different amount
+  front and rear, and the ground ramps between. **Built: 49" at the front — the man door and
+  bay door are effectively at dock height — and 6" at the rear.**
 - Every TBD item flagged visually (hatched material) until real dimensions replace it.
 
 ### Phase 3 — Equipment Catalog + Click-and-Move Placement
@@ -163,7 +168,7 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 
 - [x] Eave height 18', ridge (center) height 25'
 - [x] Front-wall bay door: 24'W × 10'H, 27' off the right corner
-- [x] Front-wall man doors: 2 × 42" inswinging, 15' off the left corner (height 7'-0" assumed)
+- [x] Front-wall man doors: 2 × 36" inswinging, 15' off the left corner (height 7'-0" assumed)
 - [ ] Any other garage/man doors on the rear or end walls?
 - [ ] Which compass direction does the front wall face?
 - [x] Ramp: internal, left end wall, 7' wide, 12' run, 33" rise, 5'-7" off the notch
@@ -171,8 +176,11 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 - [x] Rear-left corner: 15' × 13' is outside the building envelope (not an obstruction)
 - [x] Cinderblock notch: 6' × 9', hard against the cut corner, 13' off the envelope rear
 - [x] Ramp opening: 7' wide × 9' tall, sill 33" up (top of ramp), left end wall
-- [ ] Grade at the front bay door — is the apron level with the slab?
-- [ ] Mezzanine: footprint, deck height, stair location, what's under/on it
+- [x] Grade: 49" below the slab at the front, 6" at the rear
+- [x] Mezzanine: footprint, 81" clear below, 8" deck, 4x4 posts
+- [ ] Exterior ramp from the man door down to grade — dimensions
+- [ ] Mezzanine stairs and railing; confirm the 6' post spacing
+- [ ] How is the 24' bay door served at 49" above grade — dock, or an exterior ramp?
 - [ ] Real equipment list w/ measured footprints (brake, shear, ironworker, saw, cutting table, tables, welders)
 - [x] Rack spec: 20' wide × 5' deep, up to 12' tall, bays 4'–5' wide, holds 24' stock
 - [ ] Forklift model/size (affects turning radius) and typical load lengths

@@ -59,26 +59,51 @@ function dedupe(points: PlanPoint[]): PlanPoint[] {
 }
 
 /**
- * Sutherland-Hodgman clip of a plan polygon against a half-plane in z, used to
- * split the footprint at the ridge so each roof pane is a single flat surface.
+ * Sutherland-Hodgman clip of a plan polygon against an axis-aligned half-plane.
+ * The subject may be concave, which is what lets the L-shaped footprint be
+ * clipped to the ridge line or trimmed down to a mezzanine's rectangle.
  */
-export function clipPolygonByZ(
+export function clipPolygonByAxis(
   points: PlanPoint[],
-  z: number,
+  axis: 'x' | 'z',
+  value: number,
   keepBelow: boolean,
 ): PlanPoint[] {
-  const inside = (p: PlanPoint) => (keepBelow ? p.y <= z + 1e-9 : p.y >= z - 1e-9);
+  const coord = (p: PlanPoint) => (axis === 'x' ? p.x : p.y);
+  const inside = (p: PlanPoint) =>
+    keepBelow ? coord(p) <= value + 1e-9 : coord(p) >= value - 1e-9;
   const out: PlanPoint[] = [];
   for (let i = 0; i < points.length; i++) {
     const a = points[i];
     const b = points[(i + 1) % points.length];
     if (inside(a)) out.push(a.clone());
     if (inside(a) !== inside(b)) {
-      const t = (z - a.y) / (b.y - a.y);
-      out.push(new THREE.Vector2(a.x + (b.x - a.x) * t, z));
+      const t = (value - coord(a)) / (coord(b) - coord(a));
+      const p = new THREE.Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+      if (axis === 'x') p.x = value;
+      else p.y = value;
+      out.push(p);
     }
   }
   return dedupe(out);
+}
+
+/** Clip a plan polygon down to an axis-aligned rectangle. */
+export function clipPolygonToRect(points: PlanPoint[], rect: Rect): PlanPoint[] {
+  let poly = points;
+  poly = clipPolygonByAxis(poly, 'x', rect.x0, false);
+  poly = clipPolygonByAxis(poly, 'x', rect.x1, true);
+  poly = clipPolygonByAxis(poly, 'z', rect.z0, false);
+  poly = clipPolygonByAxis(poly, 'z', rect.z1, true);
+  return poly;
+}
+
+/** Distance from a plan point to a segment, for testing "is this edge on a wall". */
+export function distanceToSegment(p: PlanPoint, a: PlanPoint, b: PlanPoint): number {
+  const len2 = a.distanceToSquared(b);
+  if (len2 < 1e-12) return p.distanceTo(a);
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / len2));
+  return Math.hypot(p.x - (a.x + (b.x - a.x) * t), p.y - (a.y + (b.y - a.y) * t));
 }
 
 /** Subtract a set of intervals from [from, to], returning what survives. */

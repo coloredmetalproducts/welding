@@ -28,6 +28,12 @@ that polygon drives the slab, roof panes, wall segments, and floor grid together
 `cutouts` entry shortens the affected walls, trims the roof, and stops the grid in one go.
 Wall dimension labels are measured off each actual wall, not the envelope.
 
+## Site
+
+The slab is not at grade. The site slopes, so the floor stands 49" above the exterior grade
+at the front wall — the man door and bay door are effectively at dock height — and about 6"
+at the rear. The ground ramps between the two along the building's length.
+
 ## Dimensions
 
 Everything lives in [`data/building.json`](data/building.json) — no code changes needed

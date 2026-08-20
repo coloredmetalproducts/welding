@@ -18,13 +18,13 @@
     },
     {
       "id": "man-1",
-      "label": "Double man door (2 x 42\")",
+      "label": "Double man door (2 x 36\")",
       "kind": "man-double",
       "wall": "front",
       "fromCorner": "left",
       "offset": 15,
-      "width": 7,
-      "leafWidth": 3.5,
+      "width": 6,
+      "leafWidth": 3,
       "height": 7,
       "swing": "in",
       "note": "Height 7'-0\" assumed - confirm."
@@ -80,5 +80,24 @@
       "alongLength": 15,
       "alongWidth": 13
     }
-  ]
+  ],
+  "gradeComment": "Site slopes: slab stands 49\" above grade at the front wall (the man door and bay door are both at that height) and about 6\" at the rear.",
+  "mezzanines": [
+    {
+      "id": "mezz-rear-left",
+      "label": "Mezzanine",
+      "note": "2x8 joists + 1/4\" ply on 4x4 posts. Post spacing 6' assumed; stairs and railing not yet given.",
+      "corner": "rearLeft",
+      "alongLength": 19.25,
+      "alongWidth": 25,
+      "clearHeight": 6.75,
+      "deckDepth": 0.6667,
+      "postSize": 0.2917,
+      "postSpacing": 6
+    }
+  ],
+  "grade": {
+    "front": 4.0833,
+    "rear": 0.5
+  }
 }

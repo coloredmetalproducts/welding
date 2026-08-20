@@ -17,8 +17,9 @@ import {
 import { makeDoorAnnotations } from './doorMarkers';
 import { buildObstruction } from './obstructions';
 import { buildRamp } from './ramp';
+import { buildMezzanine } from './mezzanine';
 import { buildFootprint, type Footprint } from './footprint';
-import { clipPolygonByZ, roofHeightAt, type PlanPoint, type Rect } from './geometry';
+import { clipPolygonByAxis, roofHeightAt, type PlanPoint, type Rect } from './geometry';
 import { formatFeet } from './labels';
 
 /** A surface that fades out when the camera moves to its outside. */
@@ -49,6 +50,8 @@ export interface BuildingModel {
   blockedFootprints: Rect[];
   /** Sloped floor - drivable, but nothing should be set down on it. */
   rampFootprints: Rect[];
+  /** Headroom is limited under these, but the floor itself is usable. */
+  mezzanineFootprints: Rect[];
   hoverTargets: HoverTarget[];
   footprint: Footprint;
   walls: WallFrame[];
@@ -95,9 +98,9 @@ function hoverProxy(width: number, height: number, depth: number): THREE.Mesh {
 }
 
 /** Extrude the plan polygon downward into a slab whose top sits at y=0. */
-function slabGeometry(points: PlanPoint[]): THREE.BufferGeometry {
+function slabGeometry(points: PlanPoint[], depth: number): THREE.BufferGeometry {
   const geo = new THREE.ExtrudeGeometry(new THREE.Shape(points), {
-    depth: SLAB_DEPTH,
+    depth,
     bevelEnabled: false,
   });
   // Shape-local (x, y, z) -> world (x, -z, y): plan y carries world z, and the
@@ -138,6 +141,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
   const allOpenings: ResolvedOpening[] = [];
   const blockedFootprints: Rect[] = [];
   const rampFootprints: Rect[] = [];
+  const mezzanineFootprints: Rect[] = [];
   const hoverTargets: HoverTarget[] = [];
 
   const addFading = (
@@ -158,8 +162,11 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
 
   const footprint = buildFootprint(spec);
 
+  // The slab runs down to the LOWEST adjacent grade so the raised pad reads as a
+  // wall on the deep side rather than leaving a floating edge.
+  const deepestGrade = Math.max(spec.grade?.front ?? 0, spec.grade?.rear ?? 0);
   const slab = new THREE.Mesh(
-    slabGeometry(footprint.points),
+    slabGeometry(footprint.points, Math.max(SLAB_DEPTH, deepestGrade)),
     new THREE.MeshStandardMaterial({ color: SLAB_COLOR, roughness: 0.95 }),
   );
   slab.receiveShadow = true;
@@ -258,6 +265,28 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     });
   }
 
+  // Raised decks. Hidden in plan view so the floor under them stays readable,
+  // but their posts stay put - those are real obstacles at floor level.
+  for (const mez of spec.mezzanines ?? []) {
+    const built = buildMezzanine(spec, mez);
+    group.add(built.deck, built.supports, built.hoverMesh);
+    planHiddenGroups.push(built.deck);
+    mezzanineFootprints.push(built.footprint);
+    hoverTargets.push({
+      mesh: built.hoverMesh,
+      title: mez.label,
+      lines: [
+        `${Math.round(built.area)} sq ft of deck`,
+        `${formatFeet(mez.clearHeight)} clear below · deck top at ${formatFeet(
+          mez.clearHeight + mez.deckDepth,
+        )}`,
+        `${built.postCount} posts`,
+      ],
+      note: mez.note,
+      setHighlight: built.setHighlight,
+    });
+  }
+
   // Roof: the footprint split at the ridge, each half lifted onto the gable.
   const ridgeZ = W / 2;
   const rise = ridge - eave;
@@ -265,7 +294,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     [true, new THREE.Vector3(0, ridgeZ, -rise)],
     [false, new THREE.Vector3(0, ridgeZ, rise)],
   ] as const) {
-    const half = clipPolygonByZ(footprint.points, ridgeZ, keepBelow);
+    const half = clipPolygonByAxis(footprint.points, 'z', ridgeZ, keepBelow);
     if (half.length < 3) continue;
     const centerZ = half.reduce((sum, p) => sum + p.y, 0) / half.length;
     const centerX = half.reduce((sum, p) => sum + p.x, 0) / half.length;
@@ -285,6 +314,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     openings: allOpenings,
     blockedFootprints,
     rampFootprints,
+    mezzanineFootprints,
     hoverTargets,
     footprint,
     walls,

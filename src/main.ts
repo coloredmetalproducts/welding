@@ -41,16 +41,37 @@ sun.shadow.camera.far = 300;
 sun.target.position.copy(center);
 scene.add(sun, sun.target);
 
-// Surrounding ground (slab top sits at y=0, slab is 6" thick). The ramp is
-// internal - the neighbouring building shares our grade - so this stays flat.
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(3000, 3000),
-  new THREE.MeshStandardMaterial({ color: 0x9aa08d, roughness: 1 }),
-);
-ground.rotation.x = -Math.PI / 2;
-ground.position.set(center.x, -0.5, center.z);
-ground.receiveShadow = true;
-scene.add(ground);
+// Exterior grade. The site slopes: the slab stands 49" proud at the front,
+// where the doors are effectively at dock height, and only 6" at the rear. The
+// ground ramps between the two along the building and runs flat beyond it.
+const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x9aa08d, roughness: 1 });
+const frontDrop = spec.grade?.front ?? 0.5;
+const rearDrop = spec.grade?.rear ?? 0.5;
+const REACH = 500;
+
+function groundBand(z0: number, z1: number, y0: number, y1: number): void {
+  const geo = new THREE.BufferGeometry();
+  const x0 = -REACH;
+  const x1 = L + REACH;
+  // Wound so the face normal comes out +Y; the obvious corner order faces down
+  // and the ground vanishes when seen from above.
+  const v0 = [x0, y0, z0];
+  const v1 = [x0, y1, z1];
+  const v2 = [x1, y1, z1];
+  const v3 = [x1, y0, z0];
+  geo.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute([...v0, ...v1, ...v2, ...v0, ...v2, ...v3], 3),
+  );
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, groundMaterial);
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+}
+
+groundBand(-REACH, 0, -frontDrop, -frontDrop);
+groundBand(0, W, -frontDrop, -rearDrop);
+groundBand(W, W + REACH, -rearDrop, -rearDrop);
 
 const building = buildBuilding(spec);
 scene.add(building.group);

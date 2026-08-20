@@ -92,6 +92,30 @@ export interface Ramp {
   rise: number;
 }
 
+/**
+ * A raised deck occupying part of the floor. Its footprint is the named
+ * rectangle minus anything that isn't floor (envelope cutouts) and anything
+ * that passes through it (obstructions), so the deck wraps around them.
+ */
+export interface Mezzanine {
+  id: string;
+  label: string;
+  note?: string;
+  corner: CornerName;
+  offsetLength?: number;
+  offsetWidth?: number;
+  alongLength: number;
+  alongWidth: number;
+  /** Slab to the UNDERSIDE of the deck structure - the headroom below. */
+  clearHeight: number;
+  /** Thickness of the deck structure itself: joists plus sheathing. */
+  deckDepth: number;
+  /** Nominal spacing of the perimeter posts. */
+  postSpacing?: number;
+  /** Actual post dimension, e.g. 3.5/12 for a 4x4. */
+  postSize?: number;
+}
+
 export interface BuildingSpec {
   name: string;
   /** Overall envelope, before any corner cutouts. */
@@ -103,4 +127,10 @@ export interface BuildingSpec {
   openings: Opening[];
   obstructions?: Obstruction[];
   ramps?: Ramp[];
+  mezzanines?: Mezzanine[];
+  /**
+   * How far the slab sits above the exterior grade at the front and rear walls.
+   * The site slopes, so these differ and the ground ramps between them.
+   */
+  grade?: { front: number; rear: number };
 }
