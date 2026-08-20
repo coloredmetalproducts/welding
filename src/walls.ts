@@ -83,11 +83,13 @@ export function wallGeometry(
 ): THREE.BufferGeometry {
   const shape = new THREE.Shape(wallOutline(spec, frame));
   for (const op of openings) {
+    const sill = op.sill ?? 0;
+    const head = sill + op.height;
     const hole = new THREE.Path();
-    hole.moveTo(op.uStart, 0);
-    hole.lineTo(op.uEnd, 0);
-    hole.lineTo(op.uEnd, op.height);
-    hole.lineTo(op.uStart, op.height);
+    hole.moveTo(op.uStart, sill);
+    hole.lineTo(op.uEnd, sill);
+    hole.lineTo(op.uEnd, head);
+    hole.lineTo(op.uStart, head);
     hole.closePath();
     shape.holes.push(hole);
   }

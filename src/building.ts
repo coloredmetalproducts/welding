@@ -1,7 +1,13 @@
 import * as THREE from 'three';
 import type { BuildingSpec, WallId } from './types';
 import { resolveOpening, wallFrames, wallGeometry, type ResolvedOpening } from './walls';
-import { makeManDoor, makeOverheadDoor, type DoorBuild, type DoorControl } from './doors';
+import {
+  makeManDoor,
+  makeOpeningFrame,
+  makeOverheadDoor,
+  type DoorBuild,
+  type DoorControl,
+} from './doors';
 import { makeDoorAnnotations } from './doorMarkers';
 import { buildObstruction, type Footprint } from './obstructions';
 import { buildRamp } from './ramp';
@@ -147,13 +153,20 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     addFading(wallGeometry(spec, frame, openings), WALL_COLOR, frame.outward, wallCenter);
 
     for (const op of openings) {
-      // Doors deliberately stay opaque while their wall ghosts out: looking in
-      // from outside, the openings are exactly what we're here to review.
-      const built: DoorBuild =
-        op.kind === 'overhead' ? makeOverheadDoor(op, frame) : makeManDoor(op, frame);
-      group.add(built.group);
-      doors.push(built.control);
-      planHiddenGroups.push(built.group);
+      const sill = op.sill ?? 0;
+
+      if (op.kind === 'open') {
+        // A plain pass-through: framed, but with no leaf to operate.
+        group.add(makeOpeningFrame(op, frame));
+      } else {
+        // Doors deliberately stay opaque while their wall ghosts out: looking in
+        // from outside, the openings are exactly what we're here to review.
+        const built: DoorBuild =
+          op.kind === 'overhead' ? makeOverheadDoor(op, frame) : makeManDoor(op, frame);
+        group.add(built.group);
+        doors.push(built.control);
+        planHiddenGroups.push(built.group);
+      }
 
       const annotations = makeDoorAnnotations(op, frame);
       group.add(annotations.group);
@@ -162,7 +175,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
       // plan view, where the wall itself is edge-on.
       const proxyHolder = new THREE.Group();
       const proxy = hoverProxy(op.width, op.height, 4);
-      proxy.position.set((op.uStart + op.uEnd) / 2, op.height / 2, 0);
+      proxy.position.set((op.uStart + op.uEnd) / 2, sill + op.height / 2, 0);
       proxyHolder.add(proxy);
       proxyHolder.applyMatrix4(frame.matrix);
       group.add(proxyHolder);
@@ -171,7 +184,8 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
         mesh: proxy,
         title: op.label,
         lines: [
-          `${formatFeet(op.width)} W × ${formatFeet(op.height)} H`,
+          `${formatFeet(op.width)} W × ${formatFeet(op.height)} H clear`,
+          ...(sill > 0.1 ? [`Sill ${formatFeet(sill)} above the slab`] : []),
           `${formatFeet(op.offset)} off the ${op.fromCorner} corner`,
         ],
         note: `${WALL_NAMES[op.wall]} · measured from outside`,

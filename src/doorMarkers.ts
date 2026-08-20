@@ -33,10 +33,14 @@ export function makeDoorAnnotations(
   frame: WallFrame,
 ): DoorAnnotations {
   const group = new THREE.Group();
+  const sill = op.sill ?? 0;
+  // Floor symbols only make sense for openings you can walk or drive through.
+  // An elevated sill gets the wall outline alone.
+  const atFloor = sill < 0.1;
   const isOverhead = op.kind === 'overhead';
+  const isHinged = op.kind === 'man-double' || op.kind === 'man-single';
   const color = isOverhead ? OVERHEAD_COLOR : MAN_COLOR;
 
-  // Threshold band filling the opening, so the door reads as a gap in the wall.
   const bandMaterial = new THREE.MeshBasicMaterial({
     color,
     transparent: true,
@@ -44,24 +48,27 @@ export function makeDoorAnnotations(
     side: THREE.DoubleSide,
     depthWrite: false,
   });
-  const band = new THREE.Mesh(
-    new THREE.PlaneGeometry(op.width, isOverhead ? 1.2 : 0.8),
-    bandMaterial,
-  );
-  band.rotation.x = -Math.PI / 2;
-  band.position.set((op.uStart + op.uEnd) / 2, MARKER_Y, 0);
-  const bandHolder = new THREE.Group();
-  bandHolder.add(band);
-  bandHolder.applyMatrix4(frame.matrix);
-  group.add(bandHolder);
+  if (atFloor) {
+    // Threshold band filling the opening, so the door reads as a gap in the wall.
+    const band = new THREE.Mesh(
+      new THREE.PlaneGeometry(op.width, isOverhead ? 1.2 : 0.8),
+      bandMaterial,
+    );
+    band.rotation.x = -Math.PI / 2;
+    band.position.set((op.uStart + op.uEnd) / 2, MARKER_Y, 0);
+    const bandHolder = new THREE.Group();
+    bandHolder.add(band);
+    bandHolder.applyMatrix4(frame.matrix);
+    group.add(bandHolder);
+  }
 
-  if (isOverhead) {
+  if (isOverhead && atFloor) {
     // Approach lane projecting the clear width into the shop.
     const lane = 8;
     for (const u of [op.uStart, op.uEnd]) {
       group.add(line([toWorld(u, 0, frame), toWorld(u, lane, frame)], color));
     }
-  } else {
+  } else if (isHinged && atFloor) {
     // Hinged leaves: quarter-circle swing arcs plus the leaf at 90 degrees open.
     const leafWidth = op.leafWidth ?? op.width / 2;
     for (const side of [-1, 1] as const) {
@@ -84,10 +91,10 @@ export function makeDoorAnnotations(
   const outlineHolder = new THREE.Group();
   const outline = new THREE.LineLoop(
     new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(op.uStart, 0.05, 0),
-      new THREE.Vector3(op.uEnd, 0.05, 0),
-      new THREE.Vector3(op.uEnd, op.height, 0),
-      new THREE.Vector3(op.uStart, op.height, 0),
+      new THREE.Vector3(op.uStart, Math.max(sill, 0.05), 0),
+      new THREE.Vector3(op.uEnd, Math.max(sill, 0.05), 0),
+      new THREE.Vector3(op.uEnd, sill + op.height, 0),
+      new THREE.Vector3(op.uStart, sill + op.height, 0),
     ]),
     new THREE.LineBasicMaterial({ color: HIGHLIGHT_COLOR, depthTest: false }),
   );

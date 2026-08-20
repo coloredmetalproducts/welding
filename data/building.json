@@ -29,6 +29,19 @@
       "swing": "in",
       "note": "Height 7'-0\" assumed - confirm."
     }
+    ,
+    {
+      "id": "ramp-opening",
+      "label": "Ramp opening",
+      "kind": "open",
+      "wall": "leftEnd",
+      "fromCorner": "left",
+      "offset": 14.5833,
+      "width": 7,
+      "sill": 2.75,
+      "height": 9,
+      "note": "9'-0\" clear measured up from the top of the ramp; aligned with the ramp"
+    }
   ],
   "obstructions": [
     {

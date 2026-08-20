@@ -26,7 +26,9 @@ Everything lives in [`data/building.json`](data/building.json) — no code chang
 to move a door or resize the shell.
 
 Openings are authored the way they're measured in the field: a `wall`, the `fromCorner`
-the tape was pulled from, and the `offset` to the near edge. **Corners are named as seen
+the tape was pulled from, and the `offset` to the near edge. An optional `sill` raises an
+opening off the floor — the ramp opening starts 33" up, at the adjacent building's floor
+level. **Corners are named as seen
 from outside, facing that wall** — the 3D view labels the front wall and both its corners
 so the convention is checkable at a glance.
 

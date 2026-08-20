@@ -13,7 +13,7 @@ export type CornerRef = 'left' | 'right';
 /** A building corner, named as seen from outside the front wall. */
 export type CornerName = 'frontLeft' | 'frontRight' | 'rearLeft' | 'rearRight';
 
-export type OpeningKind = 'overhead' | 'man-double' | 'man-single';
+export type OpeningKind = 'overhead' | 'man-double' | 'man-single' | 'open';
 
 export interface Opening {
   id: string;
@@ -26,8 +26,10 @@ export interface Opening {
   offset: number;
   /** Total clear width of the opening. */
   width: number;
-  /** Clear height of the opening. */
+  /** Clear height of the opening, measured up from its sill. */
   height: number;
+  /** Height of the sill above the slab. Defaults to 0 (floor level). */
+  sill?: number;
   /** Per-leaf width for man doors. */
   leafWidth?: number;
   swing?: 'in' | 'out';

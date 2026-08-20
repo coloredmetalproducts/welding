@@ -78,6 +78,9 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
   ceiling like the real one). **Built: 24'W × 10'H bay door, 27' off the front-right corner.**
 - **Man doors:** parametric, same system, with inswinging leaves.
   **Built: two 42" inswinging leaves (7'-0" total), 15' off the front-left corner.**
+- **Plain openings:** framed pass-throughs with no leaf, and an optional sill height so an
+  opening can start above the floor. **Built: 7' × 9' opening at the head of the ramp, sill
+  33" up at the adjacent building's floor level.**
 - **Ramp** from the adjacent building: parametric wall/offset/width/run/rise. It runs
   *into* the shop — the neighbouring building's floor is higher, so the deck is highest at
   the wall and falls to our floor level inboard.
@@ -160,8 +163,7 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 - [ ] Which compass direction does the front wall face?
 - [x] Ramp: internal, left end wall, 7' wide, 12' run, 33" rise, 5'-7" off the notch
 - [x] Cinderblock notch: rear-left corner, 6' off the left wall × 9' off the rear wall
-- [ ] Opening in the left end wall at the head of the ramp — width and height? (its sill
-      sits 33" above our slab, at the adjacent building's floor level)
+- [x] Ramp opening: 7' wide × 9' tall, sill 33" up (top of ramp), left end wall
 - [ ] Grade at the front bay door — is the apron level with the slab?
 - [ ] Mezzanine: footprint, deck height, stair location, what's under/on it
 - [ ] Real equipment list w/ measured footprints (brake, shear, ironworker, saw, cutting table, tables, welders)

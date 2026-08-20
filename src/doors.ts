@@ -27,15 +27,27 @@ const PANEL_LINE = 0x69737c;
 /** Jamb and header framing around an opening, drawn in wall-local coordinates. */
 function addJambs(parent: THREE.Object3D, op: ResolvedOpening, depth: number): void {
   const mat = new THREE.MeshStandardMaterial({ color: JAMB_COLOR, roughness: 0.7 });
+  const sill = op.sill ?? 0;
   const t = 0.33;
   const addBox = (w: number, h: number, cx: number, cy: number) => {
     const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, depth), mat);
     box.position.set(cx, cy, 0);
     parent.add(box);
   };
-  addBox(t, op.height, op.uStart - t / 2, op.height / 2);
-  addBox(t, op.height, op.uEnd + t / 2, op.height / 2);
-  addBox(op.width + t * 2, t, (op.uStart + op.uEnd) / 2, op.height + t / 2);
+  addBox(t, op.height, op.uStart - t / 2, sill + op.height / 2);
+  addBox(t, op.height, op.uEnd + t / 2, sill + op.height / 2);
+  addBox(op.width + t * 2, t, (op.uStart + op.uEnd) / 2, sill + op.height + t / 2);
+  if (sill > 0.1) {
+    addBox(op.width + t * 2, t, (op.uStart + op.uEnd) / 2, sill - t / 2);
+  }
+}
+
+/** A framed hole with no leaf in it - a plain pass-through. */
+export function makeOpeningFrame(op: ResolvedOpening, frame: WallFrame): THREE.Group {
+  const group = new THREE.Group();
+  addJambs(group, op, 0.75);
+  group.applyMatrix4(frame.matrix);
+  return group;
 }
 
 /**
