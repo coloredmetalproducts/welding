@@ -27,6 +27,10 @@
       }
       #ui button:hover { background: #e2e9ef; }
       #ui button.active { background: #2c6e9e; border-color: #2c6e9e; color: #fff; }
+      #ui .section {
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.05em; color: #7b8792; margin: 12px 0 6px;
+      }
       #ui .hint { font-size: 11px; color: #7b8792; line-height: 1.5; margin-top: 4px; }
     </style>
   </head>
@@ -36,6 +40,8 @@
       <h1>Welding Shop Planner</h1>
       <div class="dims">48' × 105' &middot; 18' eave / 25' ridge</div>
       <button id="viewToggle">Switch to plan view</button>
+      <div class="section">Doors</div>
+      <div id="doorList"></div>
       <div class="hint" id="hint">
         Left-drag: orbit &middot; Right-drag: pan<br />Scroll: zoom
       </div>

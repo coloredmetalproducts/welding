@@ -4,7 +4,8 @@ Interactive 3D space-planning model of our 48' × 105' welding/fab shop building
 Drag equipment around, save layout scenarios, and simulate forklift material flow
 (including 24' stock) to test workflows before we move anything real.
 
-**Status:** Phase 1 (building shell) built. See [PLAN.md](PLAN.md) for the phased build plan.
+**Status:** Phase 1 (shell) done; Phase 2 in progress (front-wall doors built; ramp and
+mezzanine pending dimensions). See [PLAN.md](PLAN.md) for the phased build plan.
 
 ## Running it
 
@@ -18,5 +19,16 @@ Controls: left-drag orbits, right-drag pans, scroll zooms. Press **P** (or use t
 button) to toggle the top-down plan view. Walls and roof automatically fade when
 the camera is outside them so the interior stays visible.
 
-Building dimensions live in [`data/building.json`](data/building.json) — real door,
-ramp, and mezzanine dimensions drop in there as we get them (Phase 2).
+## Dimensions
+
+Everything lives in [`data/building.json`](data/building.json) — no code changes needed
+to move a door or resize the shell.
+
+Openings are authored the way they're measured in the field: a `wall`, the `fromCorner`
+the tape was pulled from, and the `offset` to the near edge. **Corners are named as seen
+from outside, facing that wall** — the 3D view labels the front wall and both its corners
+so the convention is checkable at a glance.
+
+Doors can be opened and closed from the panel. In plan view the leaves are hidden and
+each opening shows as an architectural floor symbol: a threshold band, approach lines for
+the overhead door, and swing arcs for the hinged leaves.

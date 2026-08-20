@@ -73,9 +73,11 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 ### Phase 2 — Building Features (doors, ramp, mezzanine)
 > *Deliverable: the real building, driven entirely by `building.json`.*
 
-- **Garage doors:** parametric — wall, offset, width, height. Rendered with panel lines,
-  open/closed toggle (slides up). Placeholder: 2 doors, 14'×14', until real dims arrive.
-- Man doors (parametric, same system).
+- **Garage doors:** parametric — wall, corner the offset is measured from, width, height.
+  Rendered with section lines and an open/closed toggle (lifts and lays back under the
+  ceiling like the real one). **Built: 24'W × 10'H bay door, 27' off the front-right corner.**
+- **Man doors:** parametric, same system, with inswinging leaves.
+  **Built: two 42" inswinging leaves (7'-0" total), 15' off the front-left corner.**
 - **Ramp** to the adjacent building: parametric slope/width/landing; stub of the neighboring
   building wall so the connection reads correctly. (Dims TBD.)
 - **Mezzanine:** parametric platform (footprint, deck height, stair location, railing).
@@ -147,8 +149,10 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 ## Dimensions Needed (drop in as we go — placeholders until then)
 
 - [x] Eave height 18', ridge (center) height 25'
-- [ ] Garage doors: count, which wall, offsets, W × H each
-- [ ] Man doors: locations
+- [x] Front-wall bay door: 24'W × 10'H, 27' off the right corner
+- [x] Front-wall man doors: 2 × 42" inswinging, 15' off the left corner (height 7'-0" assumed)
+- [ ] Any other garage/man doors on the rear or end walls?
+- [ ] Which compass direction does the front wall face?
 - [ ] Ramp: which wall, width, elevation change, length, landing; adjacent building position
 - [ ] Mezzanine: footprint, deck height, stair location, what's under/on it
 - [ ] Real equipment list w/ measured footprints (brake, shear, ironworker, saw, cutting table, tables, welders)

@@ -1,9 +1,12 @@
 import * as THREE from 'three';
-import type { BuildingSpec } from './types';
+import type { BuildingSpec, WallId } from './types';
+import { resolveOpening, wallFrames, wallGeometry, type ResolvedOpening } from './walls';
+import { makeManDoor, makeOverheadDoor, type DoorBuild, type DoorControl } from './doors';
+import { makeDoorMarkers } from './doorMarkers';
 
-/** A wall/roof panel that auto-fades when the camera is on its outside. */
+/** A surface that fades out when the camera moves to its outside. */
 export interface FadePanel {
-  material: THREE.MeshStandardMaterial;
+  materials: THREE.Material[];
   outwardNormal: THREE.Vector3;
   point: THREE.Vector3;
 }
@@ -11,6 +14,12 @@ export interface FadePanel {
 export interface BuildingModel {
   group: THREE.Group;
   fadePanels: FadePanel[];
+  doors: DoorControl[];
+  /** Door leaf/jamb groups, hidden in plan view so floor symbols read cleanly. */
+  doorGroups: THREE.Group[];
+  openings: ResolvedOpening[];
+  /** World position just outside each opening, for placing labels. */
+  openingAnchors: Map<string, THREE.Vector3>;
 }
 
 const WALL_COLOR = 0xe3e8ec;
@@ -29,7 +38,7 @@ function panelMaterial(color: number): THREE.MeshStandardMaterial {
   });
 }
 
-/** Outline edges stay opaque even when their panel fades, so the shell always reads. */
+/** Outline edges stay opaque when a panel fades, so the shell always reads. */
 function edgesFor(geometry: THREE.BufferGeometry): THREE.LineSegments {
   return new THREE.LineSegments(
     new THREE.EdgesGeometry(geometry, 20),
@@ -46,10 +55,7 @@ function quadGeometry(
   const geo = new THREE.BufferGeometry();
   geo.setAttribute(
     'position',
-    new THREE.Float32BufferAttribute(
-      [a, b, c, d].flatMap((v) => [v.x, v.y, v.z]),
-      3,
-    ),
+    new THREE.Float32BufferAttribute([a, b, c, d].flatMap((v) => [v.x, v.y, v.z]), 3),
   );
   geo.setIndex([0, 1, 2, 0, 2, 3]);
   geo.computeVertexNormals();
@@ -60,19 +66,26 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
   const { length: L, width: W, eaveHeight: eave, ridgeHeight: ridge } = spec;
   const group = new THREE.Group();
   const fadePanels: FadePanel[] = [];
+  const doors: DoorControl[] = [];
+  const doorGroups: THREE.Group[] = [];
+  const allOpenings: ResolvedOpening[] = [];
+  const openingAnchors = new Map<string, THREE.Vector3>();
   const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 
-  const addPanel = (
+  const addFading = (
     geometry: THREE.BufferGeometry,
     color: number,
     outwardNormal: THREE.Vector3,
     point: THREE.Vector3,
   ) => {
     const material = panelMaterial(color);
-    const mesh = new THREE.Mesh(geometry, material);
-    group.add(mesh);
+    group.add(new THREE.Mesh(geometry, material));
     group.add(edgesFor(geometry));
-    fadePanels.push({ material, outwardNormal: outwardNormal.normalize(), point });
+    fadePanels.push({
+      materials: [material],
+      outwardNormal: outwardNormal.clone().normalize(),
+      point,
+    });
   };
 
   // Slab: top surface at y=0.
@@ -84,56 +97,81 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
   slab.receiveShadow = true;
   group.add(slab);
 
-  // Side walls along the length (z = 0 and z = W).
-  addPanel(quadGeometry(v(0, 0, 0), v(L, 0, 0), v(L, eave, 0), v(0, eave, 0)), WALL_COLOR, v(0, 0, -1), v(L / 2, eave / 2, 0));
-  addPanel(quadGeometry(v(0, 0, W), v(L, 0, W), v(L, eave, W), v(0, eave, W)), WALL_COLOR, v(0, 0, 1), v(L / 2, eave / 2, W));
+  // Walls, each punched with the openings assigned to it.
+  const frames = wallFrames(spec);
+  for (const id of Object.keys(frames) as WallId[]) {
+    const frame = frames[id];
+    const openings = spec.openings
+      .filter((op) => op.wall === id)
+      .map((op) => resolveOpening(op, frame));
+    allOpenings.push(...openings);
 
-  // Gable end walls (x = 0 and x = L): rectangle plus peak up to the ridge.
-  for (const [x, nx] of [
-    [0, -1],
-    [L, 1],
-  ] as const) {
-    const geo = new THREE.BufferGeometry();
-    const pts = [v(x, 0, 0), v(x, 0, W), v(x, eave, W), v(x, ridge, W / 2), v(x, eave, 0)];
-    geo.setAttribute(
-      'position',
-      new THREE.Float32BufferAttribute(pts.flatMap((p) => [p.x, p.y, p.z]), 3),
+    const midHeight = (id === 'leftEnd' || id === 'rightEnd' ? (eave + ridge) / 2 : eave) / 2;
+    const wallCenter = new THREE.Vector3(frame.span / 2, midHeight, 0).applyMatrix4(
+      frame.matrix,
     );
-    geo.setIndex([0, 1, 2, 0, 2, 4, 2, 3, 4]);
-    geo.computeVertexNormals();
-    addPanel(geo, WALL_COLOR, v(nx, 0, 0), v(x, eave / 2, W / 2));
+    addFading(
+      wallGeometry(spec, frame, openings),
+      WALL_COLOR,
+      frame.outward,
+      wallCenter,
+    );
+
+    for (const op of openings) {
+      const built: DoorBuild =
+        op.kind === 'overhead' ? makeOverheadDoor(op, frame) : makeManDoor(op, frame);
+      group.add(built.group);
+      doors.push(built.control);
+      doorGroups.push(built.group);
+
+      // Doors deliberately stay opaque while their wall ghosts out: looking in
+      // from outside, the openings are exactly what we're here to review.
+      const center = new THREE.Vector3((op.uStart + op.uEnd) / 2, op.height / 2, 0)
+        .applyMatrix4(frame.matrix);
+
+      group.add(makeDoorMarkers(op, frame));
+      openingAnchors.set(
+        op.id,
+        center.clone().addScaledVector(frame.outward, 13).setY(op.height + 4),
+      );
+    }
   }
 
   // Roof panes from each eave up to the ridge (ridge runs along X at z = W/2).
   const rise = ridge - eave;
-  addPanel(
+  addFading(
     quadGeometry(v(0, eave, 0), v(L, eave, 0), v(L, ridge, W / 2), v(0, ridge, W / 2)),
     ROOF_COLOR,
     v(0, W / 2, -rise),
     v(L / 2, (eave + ridge) / 2, W / 4),
   );
-  addPanel(
+  addFading(
     quadGeometry(v(0, ridge, W / 2), v(L, ridge, W / 2), v(L, eave, W), v(0, eave, W)),
     ROOF_COLOR,
     v(0, W / 2, rise),
     v(L / 2, (eave + ridge) / 2, (3 * W) / 4),
   );
 
-  return { group, fadePanels };
+  return { group, fadePanels, doors, doorGroups, openings: allOpenings, openingAnchors };
 }
 
 /**
  * Fade any panel whose outside faces the camera, so the interior is always
  * visible while the far walls keep the sense of enclosure.
  */
-export function updatePanelFades(fadePanels: FadePanel[], cameraPosition: THREE.Vector3): void {
+export function updatePanelFades(
+  fadePanels: FadePanel[],
+  cameraPosition: THREE.Vector3,
+): void {
   const toCamera = new THREE.Vector3();
   for (const panel of fadePanels) {
     toCamera.subVectors(cameraPosition, panel.point);
     const outside = toCamera.dot(panel.outwardNormal) > 0;
     const target = outside ? 0.05 : 1;
-    const opacity = panel.material.opacity + (target - panel.material.opacity) * 0.18;
-    panel.material.opacity = Math.abs(opacity - target) < 0.01 ? target : opacity;
-    panel.material.depthWrite = panel.material.opacity > 0.5;
+    for (const material of panel.materials) {
+      const next = material.opacity + (target - material.opacity) * 0.18;
+      material.opacity = Math.abs(next - target) < 0.01 ? target : next;
+      material.depthWrite = material.opacity > 0.5;
+    }
   }
 }

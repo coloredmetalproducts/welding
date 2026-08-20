@@ -3,10 +3,11 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import buildingData from '../data/building.json';
 import { buildBuilding, updatePanelFades } from './building';
 import { makeFloorGrid } from './grid';
-import { makeTextSprite } from './labels';
+import { formatFeet, makeTextSprite } from './labels';
 import type { BuildingSpec } from './types';
 
-const spec: BuildingSpec = buildingData;
+// JSON widens string literals, so the spec shape is asserted at the boundary.
+const spec = buildingData as unknown as BuildingSpec;
 const { length: L, width: W } = spec;
 const center = new THREE.Vector3(L / 2, 0, W / 2);
 
@@ -22,8 +23,8 @@ container.appendChild(renderer.domElement);
 // ------------------------------------------------------------------- scene
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xdfe7ee);
-
 scene.fog = new THREE.Fog(0xdfe7ee, 350, 1000);
+
 scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa08d, 1.4));
 const fill = new THREE.DirectionalLight(0xeef4ff, 0.7);
 fill.position.set(-60, 50, 120);
@@ -54,8 +55,9 @@ const building = buildBuilding(spec);
 scene.add(building.group);
 scene.add(makeFloorGrid(L, W));
 
-// Footprint dimension labels just outside the slab, on both sides.
-for (const z of [-7, W + 7]) {
+// ------------------------------------------------------------------ labels
+// Footprint dimensions on all four sides.
+for (const z of [-4, W + 7]) {
   const label = makeTextSprite(`${L}'-0"`, 5);
   label.position.set(L / 2, 0.1, z);
   scene.add(label);
@@ -66,6 +68,36 @@ for (const x of [-9, L + 9]) {
   scene.add(label);
 }
 
+// Orientation aids: opening offsets are measured from a corner "as seen from
+// outside", so name the front wall and its corners to make that checkable.
+const frontLabel = makeTextSprite('FRONT WALL', 5, '#2c6e9e');
+frontLabel.position.set(L / 2, 0.1, -30);
+scene.add(frontLabel);
+const rightCorner = makeTextSprite('RIGHT\nCORNER', 3, '#2c6e9e');
+rightCorner.position.set(9, 0.1, -22);
+scene.add(rightCorner);
+const leftCorner = makeTextSprite('LEFT\nCORNER', 3, '#2c6e9e');
+leftCorner.position.set(L - 9, 0.1, -22);
+scene.add(leftCorner);
+
+// Callout outside each opening: what it is, how big, and where it was measured
+// from -- enough to check the model against the tape without opening the JSON.
+for (const op of building.openings) {
+  const anchor = building.openingAnchors.get(op.id);
+  if (!anchor) continue;
+  const label = makeTextSprite(
+    [
+      op.label,
+      `${formatFeet(op.width)} W x ${formatFeet(op.height)} H`,
+      `${formatFeet(op.offset)} off ${op.fromCorner} corner`,
+    ].join('\n'),
+    2.3,
+    '#8a4a12',
+  );
+  label.position.copy(anchor);
+  scene.add(label);
+}
+
 // ----------------------------------------------------------------- cameras
 const perspCamera = new THREE.PerspectiveCamera(
   55,
@@ -73,7 +105,8 @@ const perspCamera = new THREE.PerspectiveCamera(
   0.5,
   2000,
 );
-perspCamera.position.set(L / 2 - 30, 70, W + 75);
+// Start outside the front wall, where every opening so far lives.
+perspCamera.position.set(L * 0.28, 52, -82);
 
 const orbit = new OrbitControls(perspCamera, renderer.domElement);
 orbit.target.copy(center);
@@ -89,16 +122,18 @@ const planControls = new OrbitControls(planCamera, renderer.domElement);
 planControls.target.copy(center);
 planControls.enableRotate = false;
 planControls.screenSpacePanning = true;
-planControls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+planControls.mouseButtons = {
+  LEFT: THREE.MOUSE.PAN,
+  MIDDLE: THREE.MOUSE.DOLLY,
+  RIGHT: THREE.MOUSE.PAN,
+};
 planControls.enabled = false;
 
 function fitPlanCamera(): void {
-  const margin = 18;
-  const extentW = L + margin * 2;
-  const extentH = W + margin * 2;
+  const margin = 34;
   const aspect = window.innerWidth / window.innerHeight;
-  let halfW = extentW / 2;
-  let halfH = extentH / 2;
+  let halfW = (L + margin * 2) / 2;
+  let halfH = (W + margin * 2) / 2;
   if (halfW / halfH < aspect) halfW = halfH * aspect;
   else halfH = halfW / aspect;
   planCamera.left = -halfW;
@@ -119,6 +154,7 @@ function setPlanView(on: boolean): void {
   planControls.enabled = on;
   viewToggle.textContent = on ? 'Switch to 3D view' : 'Switch to plan view';
   viewToggle.classList.toggle('active', on);
+  for (const doorGroup of building.doorGroups) doorGroup.visible = !on;
   hint.innerHTML = on
     ? 'Drag: pan &middot; Scroll: zoom'
     : 'Left-drag: orbit &middot; Right-drag: pan<br />Scroll: zoom';
@@ -127,6 +163,22 @@ viewToggle.addEventListener('click', () => setPlanView(!planView));
 window.addEventListener('keydown', (e) => {
   if (e.key.toLowerCase() === 'p' && !e.metaKey && !e.ctrlKey) setPlanView(!planView);
 });
+
+// ------------------------------------------------------------- door toggles
+const doorList = document.getElementById('doorList')!;
+for (const door of building.doors) {
+  const button = document.createElement('button');
+  const render = () => {
+    button.textContent = `${door.label}: ${door.isOpen() ? 'open' : 'closed'}`;
+    button.classList.toggle('active', door.isOpen());
+  };
+  button.addEventListener('click', () => {
+    door.toggle();
+    render();
+  });
+  render();
+  doorList.appendChild(button);
+}
 
 // ------------------------------------------------------------------ resize
 window.addEventListener('resize', () => {
@@ -141,6 +193,7 @@ const cameraWorldPos = new THREE.Vector3();
 renderer.setAnimationLoop(() => {
   const camera = planView ? planCamera : perspCamera;
   (planView ? planControls : orbit).update();
+  for (const door of building.doors) door.tick();
   camera.getWorldPosition(cameraWorldPos);
   updatePanelFades(building.fadePanels, cameraWorldPos);
   renderer.render(scene, camera);

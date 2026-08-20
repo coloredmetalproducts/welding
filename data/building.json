@@ -1,14 +1,37 @@
 {
   "name": "Main Shop",
-  "comment": "All dimensions in feet. X axis runs along the 105' length, Z along the 48' width, Y is up. Ridge runs along the length.",
+  "comment": "All dimensions in FEET. X runs along the 105' length, Z along the 48' width, Y is up. The 'front' wall is at z=0. Opening offsets are measured from the named corner AS VIEWED FROM OUTSIDE facing that wall.",
   "length": 105,
   "width": 48,
   "eaveHeight": 18,
   "ridgeHeight": 25,
+  "openings": [
+    {
+      "id": "bay-1",
+      "label": "24' bay door",
+      "kind": "overhead",
+      "wall": "front",
+      "fromCorner": "right",
+      "offset": 27,
+      "width": 24,
+      "height": 10
+    },
+    {
+      "id": "man-1",
+      "label": "Double man door (2 x 42\")",
+      "kind": "man-double",
+      "wall": "front",
+      "fromCorner": "left",
+      "offset": 15,
+      "width": 7,
+      "leafWidth": 3.5,
+      "height": 7,
+      "swing": "in",
+      "note": "Height 7'-0\" assumed - confirm."
+    }
+  ],
   "tbd": {
-    "garageDoors": "count, wall, offsets, W x H — Phase 2",
-    "manDoors": "locations — Phase 2",
-    "ramp": "wall, width, slope, adjacent building — Phase 2",
-    "mezzanine": "footprint, deck height, stairs — Phase 2"
+    "ramp": "wall, width, slope, adjacent building position",
+    "mezzanine": "footprint, deck height, stair location"
   }
 }
