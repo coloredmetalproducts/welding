@@ -2,7 +2,7 @@
 
 /**
  * Wall identifiers. `front` is the z=0 long wall; `rear` is z=width.
- * `leftEnd` / `rightEnd` are the 48' gable ends, named as seen from outside
+ * `leftEnd` / `rightEnd` are the gable ends, named as seen from outside
  * standing in front of the building - so `leftEnd` is the x=length wall.
  */
 export type WallId = 'front' | 'rear' | 'leftEnd' | 'rightEnd';
@@ -44,9 +44,9 @@ export interface Obstruction {
   label: string;
   note?: string;
   corner: CornerName;
-  /** Extent measured off the end wall, along the 105' axis. */
+  /** Extent measured off the end wall, along the length axis. */
   alongLength: number;
-  /** Extent measured off the front or rear wall, along the 48' axis. */
+  /** Extent measured off the front or rear wall, along the width axis. */
   alongWidth: number;
 }
 

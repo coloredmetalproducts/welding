@@ -1,8 +1,8 @@
 {
   "name": "Main Shop",
-  "comment": "All dimensions in FEET. X runs along the 105' length, Z along the 48' width, Y is up. The 'front' wall is at z=0. Left/right are always AS SEEN FROM OUTSIDE facing the wall in question - so the left end wall is at x=105.",
+  "comment": "All dimensions in FEET. X runs along the 105' length, Z along the 50' width, Y is up. The 'front' wall is at z=0. Left/right are always AS SEEN FROM OUTSIDE facing the wall in question - so the left end wall is at x=105.",
   "length": 105,
-  "width": 48,
+  "width": 50,
   "eaveHeight": 18,
   "ridgeHeight": 25,
   "openings": [
@@ -28,8 +28,7 @@
       "height": 7,
       "swing": "in",
       "note": "Height 7'-0\" assumed - confirm."
-    }
-    ,
+    },
     {
       "id": "ramp-opening",
       "label": "Ramp opening",
@@ -43,16 +42,7 @@
       "note": "9'-0\" clear measured up from the top of the ramp; aligned with the ramp"
     }
   ],
-  "obstructions": [
-    {
-      "id": "notch-rear-left",
-      "label": "Cinderblock notch",
-      "note": "Walled to the roof - inaccessible, unusable space",
-      "corner": "rearLeft",
-      "alongLength": 6,
-      "alongWidth": 9
-    }
-  ],
+  "obstructions": [],
   "ramps": [
     {
       "id": "ramp-left",
@@ -61,14 +51,15 @@
       "wall": "leftEnd",
       "fromCorner": "left",
       "offset": 14.5833,
-      "offsetComment": "9' cinderblock notch + 5'-7\", measured from the rear (left) corner of the left end wall",
+      "offsetComment": "14'-7\" off the rear (left) corner of the left end wall. Originally measured as 9' of cinderblock notch + 5'-7\"; provisional until the notches are re-measured.",
       "width": 7,
       "run": 12,
       "rise": 2.75
     }
   ],
   "tbd": {
+    "notches": "Cinderblock notch temporarily removed - there is another notch before it. The removed one was: rearLeft corner, 6' along the length x 9' along the width.",
     "mezzanine": "footprint, deck height, stair location",
-    "rampOpening": "the ramp needs an opening in the left end wall, sill 33\" above the slab - size not yet given"
+    "frontGrade": "is the apron at the bay door level with the slab?"
   }
 }

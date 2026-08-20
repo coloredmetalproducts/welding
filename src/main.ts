@@ -57,6 +57,9 @@ scene.add(building.group);
 scene.add(makeFloorGrid(L, W));
 
 // ------------------------------------------------------------------ labels
+document.getElementById('dims')!.textContent =
+  `${W}' × ${L}' · ${spec.eaveHeight}' eave / ${spec.ridgeHeight}' ridge`;
+
 // Footprint dimensions on all four sides.
 for (const z of [-4, W + 7]) {
   const label = makeTextSprite(`${L}'-0"`, 5);

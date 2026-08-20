@@ -1,6 +1,6 @@
 # Welding Shop 3D Planner — Phased Build Plan
 
-An interactive, browser-based 3D model of our 48' × 105' clear-span metal building, used for
+An interactive, browser-based 3D model of our 50' × 105' clear-span metal building, used for
 space planning, workflow experiments, and material-flow simulation as we convert it into the
 new welding/fab shop.
 
@@ -42,7 +42,7 @@ Grid default 1', placement snap default 6" (adjustable).
 
 ```
 data/
-  building.json      — shell: 48 × 105 footprint, eave/ridge heights, wall openings
+  building.json      — shell: 50 × 105 footprint, eave/ridge heights, wall openings
                        (garage doors, man doors), ramp geometry, mezzanine geometry
   catalog.json       — equipment definitions: footprint, height, color, mobility
                        (fixed | rolling | driven), parametric options (rack bays, etc.)
@@ -62,7 +62,7 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 > *Deliverable: walk around inside an accurate empty building in the browser.*
 
 - Vite + TypeScript + Three.js project scaffold, npm scripts, README.
-- 48' × 105' slab, walls, gabled roof — **18' eave, 25' ridge** (ridge assumed to run along
+- 50' × 105' slab, walls, gabled roof — **18' eave, 25' ridge** (ridge assumed to run along
   the 105' length, standard for a clear-span metal building).
 - Orbit / pan / zoom camera; **top-down orthographic "plan view" toggle** (this is the view
   we'll actually plan in half the time).
@@ -87,7 +87,8 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
   **Built: 7' wide, 12' run, 33" rise (23% grade), on the left end wall 5'-7" off the
   cinderblock notch. Costs 84 sq ft of sloped floor.**
 - **Unusable areas:** corner-anchored obstructions, solid to the roof in 3D and hatched on
-  the floor in plan. **Built: 6' × 9' cinderblock notch at the rear-left corner (54 sq ft).**
+  the floor in plan. Built and working, but currently no instances — the cinderblock notch
+  was pulled pending a re-measure (there's another notch ahead of it).
 - **Mezzanine:** parametric platform (footprint, deck height, stair location, railing).
   Clearance under it is honored by the placement system. (Dims TBD.)
 - Every TBD item flagged visually (hatched material) until real dimensions replace it.
@@ -162,7 +163,8 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 - [ ] Any other garage/man doors on the rear or end walls?
 - [ ] Which compass direction does the front wall face?
 - [x] Ramp: internal, left end wall, 7' wide, 12' run, 33" rise, 5'-7" off the notch
-- [x] Cinderblock notch: rear-left corner, 6' off the left wall × 9' off the rear wall
+- [ ] Cinderblock notches: the rear-left one (6' × 9') is pulled for now — there's another
+      notch before it. Need both, measured from a named corner.
 - [x] Ramp opening: 7' wide × 9' tall, sill 33" up (top of ramp), left end wall
 - [ ] Grade at the front bay door — is the apron level with the slab?
 - [ ] Mezzanine: footprint, deck height, stair location, what's under/on it
