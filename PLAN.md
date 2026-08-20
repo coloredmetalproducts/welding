@@ -190,9 +190,9 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 - [x] Exterior man-door ramp: 19' long, falling 33" to grade (width assumed 6')
 - [x] Raised dock: 16' × 40' concrete at the front-left corner, level with the floor
 - [x] Front yard is gravel except the dock and ramp, which are concrete
-- [ ] Mezzanine stairs and railing; confirm the 6' post spacing
-- [ ] How is the 24' bay door served at 49" above grade — dock, or an exterior ramp?
-- [ ] Confirm the exterior ramp width
+- [x] The 24' bay door is served **as a loading dock** — no floor-level access from the yard
+- [x] Exterior ramp width confirmed close enough at 6'
+- [ ] Mezzanine stairs and railing; post spacing 6' assumed
 - [ ] Real equipment list w/ measured footprints (brake, shear, ironworker, saw, cutting table, tables, welders)
 - [x] Rack spec: 20' wide × 5' deep, up to 12' tall, bays 4'–5' wide, holds 24' stock
 - [ ] Forklift model/size (affects turning radius) and typical load lengths

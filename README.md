@@ -38,6 +38,9 @@ sampled grid following that surface.
 The front yard is gravel; the 16' × 40' dock and the man-door ramp are concrete. The dock
 surface is level with the interior floor, and the ramp falls 33" to grade over 19'.
 
+Nothing drives in at grade. The bay door is a loading dock, so everything arrives over the
+dock, off a trailer at the bay door, or through the internal ramp from the adjacent building.
+
 ## Dimensions
 
 Everything lives in [`data/building.json`](data/building.json) — no code changes needed

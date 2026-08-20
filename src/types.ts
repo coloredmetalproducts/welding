@@ -18,6 +18,7 @@ export type OpeningKind = 'overhead' | 'man-double' | 'man-single' | 'open';
 export interface Opening {
   id: string;
   label: string;
+  note?: string;
   kind: OpeningKind;
   wall: WallId;
   /** Corner the offset is measured from, viewed from outside facing the wall. */

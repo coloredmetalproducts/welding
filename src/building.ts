@@ -232,7 +232,10 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
           ...(sill > 0.1 ? [`Sill ${formatFeet(sill)} above the slab`] : []),
           `${formatFeet(op.offset)} off the ${op.fromCorner} corner`,
         ],
-        note: `${WALL_NAMES[op.wall] ?? op.wall} · measured from outside`,
+        note: [
+          `${WALL_NAMES[op.wall] ?? op.wall} · measured from outside`,
+          ...(op.note ? [op.note] : []),
+        ].join('<br />'),
         setHighlight: annotations.setHighlight,
         activate: control && (() => control.toggle()),
         actionLabel: control && (() => `Click to ${control.isOpen() ? 'close' : 'open'}`),

@@ -14,7 +14,8 @@
       "fromCorner": "right",
       "offset": 27,
       "width": 24,
-      "height": 10
+      "height": 10,
+      "note": "Loading dock only - no floor-level access from the yard (49\" above grade)"
     },
     {
       "id": "man-1",
@@ -68,10 +69,9 @@
     }
   ],
   "tbd": {
-    "mezzanineStairs": "stair location and railing; confirm the 6' post spacing",
-    "bayDoorApron": "how is the 24' bay door served at 49\" above grade - a dock, or a ramp?",
-    "rampWidth": "exterior man door ramp width - assumed 6' to match the door",
-    "gravelExtent": "gravel yard extent is indicative"
+    "mezzanineStairs": "stair location and railing; post spacing 6' assumed",
+    "gravelExtent": "gravel yard extent is indicative",
+    "rampWidth": "exterior man door ramp is a little over 6' - refine if it matters"
   },
   "cutouts": [
     {
@@ -135,7 +135,7 @@
     {
       "id": "ramp-man-door",
       "label": "Man door ramp",
-      "note": "Concrete. Width not dimensioned - taken as the man door's 6'-0\"",
+      "note": "Concrete. Slightly wider than 6' in reality; 6' is close enough for planning.",
       "kind": "ramp",
       "wall": "front",
       "fromCorner": "left",
