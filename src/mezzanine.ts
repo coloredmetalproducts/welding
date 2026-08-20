@@ -64,14 +64,16 @@ function deckOutline(
     }
   }
 
-  // Trace the staircase: low side of every band going up, then the high side
-  // coming back down.
+  // Trace the staircase counter-clockwise: up the high-x side, then back down
+  // the low-x side. The winding matters - the post inset relies on the inward
+  // normal of a counter-clockwise edge, and tracing the other way pushes the
+  // posts out past the deck instead of under it.
   const points: PlanPoint[] = [];
   for (const band of bands) {
-    points.push(new THREE.Vector2(band.x0, band.z0), new THREE.Vector2(band.x0, band.z1));
+    points.push(new THREE.Vector2(band.x1, band.z0), new THREE.Vector2(band.x1, band.z1));
   }
   for (const band of [...bands].reverse()) {
-    points.push(new THREE.Vector2(band.x1, band.z1), new THREE.Vector2(band.x1, band.z0));
+    points.push(new THREE.Vector2(band.x0, band.z1), new THREE.Vector2(band.x0, band.z0));
   }
 
   // Drop the collinear duplicates the trace leaves behind.
@@ -135,7 +137,8 @@ export function buildMezzanine(spec: BuildingSpec, mez: Mezzanine): MezzanineBui
     const b = points[(i + 1) % points.length];
     const span = a.distanceTo(b);
     if (span < 1e-9) continue;
-    // Inward normal of a counter-clockwise edge, to set the posts off the edge.
+    // Inward normal of a counter-clockwise edge, so each post sits wholly under
+    // the deck with its outer face flush to the edge.
     const inset = postSize / 2;
     const nx = (-(b.y - a.y) / span) * inset;
     const nz = ((b.x - a.x) / span) * inset;

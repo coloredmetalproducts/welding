@@ -69,7 +69,10 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
   wall's top follows the roof underside, so walls across the ridge get a gable peak and
   walls along it get a flat top, with no special-casing.
 - Orbit / pan / zoom camera; **top-down orthographic "plan view" toggle** (this is the view
-  we'll actually plan in half the time).
+  we'll actually plan in half the time), standard elevation presets, and a toggle to hide all
+  dimensions and labels for a clean look.
+- **Everything is hoverable** for its dimensions, and **doors are opened by clicking them**
+  directly in the scene rather than from a control panel.
 - Walls and roof auto-fade when the camera is outside so the interior is always visible.
 - 1' floor grid with 5' major lines; N/S/E/W + dimension labels on the slab edges.
 - Clean lighting, sky/ground backdrop.
@@ -97,9 +100,15 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
   aren't floor, and obstructions pass through it — plus 4x4 perimeter posts.
   **Built: rear-left corner, 19'-3" × 25'-0" gross wrapping both notches → 232 sq ft of
   deck. 2x8 joists + ¼" ply: 81" clear below, deck top at 7'-5". 25 posts at 6' (assumed).**
-- **Sloping site grade:** the slab stands proud of the exterior grade by a different amount
-  front and rear, and the ground ramps between. **Built: 49" at the front — the man door and
-  bay door are effectively at dock height — and 6" at the rear.**
+- **Sloping site grade:** the slab stands proud of the exterior grade by different amounts,
+  and the grade is a *profile* along the front rather than one number — it falls from the
+  dock end toward the bay door. **Built: 33" at the dock/ramp end, 49" at the bay door, 6"
+  at the rear.** The ground is a sampled grid following that surface, with the gravel yard
+  carried as vertex colour.
+- **Exterior concrete:** docks and ramps outside the wall, one shape covering both — a wedge
+  whose far edge matches its near edge is a flat slab. **Built: 16' × 40' dock at the front-left
+  corner, surface level with the interior floor; 6' × 19' man-door ramp falling 33" to grade
+  (14% grade).**
 - Every TBD item flagged visually (hatched material) until real dimensions replace it.
 
 ### Phase 3 — Equipment Catalog + Click-and-Move Placement
@@ -178,9 +187,12 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 - [x] Ramp opening: 7' wide × 9' tall, sill 33" up (top of ramp), left end wall
 - [x] Grade: 49" below the slab at the front, 6" at the rear
 - [x] Mezzanine: footprint, 81" clear below, 8" deck, 4x4 posts
-- [ ] Exterior ramp from the man door down to grade — dimensions
+- [x] Exterior man-door ramp: 19' long, falling 33" to grade (width assumed 6')
+- [x] Raised dock: 16' × 40' concrete at the front-left corner, level with the floor
+- [x] Front yard is gravel except the dock and ramp, which are concrete
 - [ ] Mezzanine stairs and railing; confirm the 6' post spacing
 - [ ] How is the 24' bay door served at 49" above grade — dock, or an exterior ramp?
+- [ ] Confirm the exterior ramp width
 - [ ] Real equipment list w/ measured footprints (brake, shear, ironworker, saw, cutting table, tables, welders)
 - [x] Rack spec: 20' wide × 5' deep, up to 12' tall, bays 4'–5' wide, holds 24' stock
 - [ ] Forklift model/size (affects turning radius) and typical load lengths

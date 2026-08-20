@@ -18,6 +18,7 @@ import { makeDoorAnnotations } from './doorMarkers';
 import { buildObstruction } from './obstructions';
 import { buildRamp } from './ramp';
 import { buildMezzanine } from './mezzanine';
+import { buildExteriorWork } from './exterior';
 import { buildFootprint, type Footprint } from './footprint';
 import { clipPolygonByAxis, roofHeightAt, type PlanPoint, type Rect } from './geometry';
 import { formatFeet } from './labels';
@@ -37,6 +38,10 @@ export interface HoverTarget {
   lines: string[];
   note?: string;
   setHighlight(on: boolean): void;
+  /** Clicking the target does this, if it does anything. */
+  activate?: () => void;
+  /** What a click would do right now, for the tooltip. */
+  actionLabel?: () => string;
 }
 
 export interface BuildingModel {
@@ -164,7 +169,10 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
 
   // The slab runs down to the LOWEST adjacent grade so the raised pad reads as a
   // wall on the deep side rather than leaving a floating edge.
-  const deepestGrade = Math.max(spec.grade?.front ?? 0, spec.grade?.rear ?? 0);
+  const deepestGrade = Math.max(
+    spec.grade?.rear ?? 0,
+    ...(spec.grade?.front ?? []).map((point) => point.drop),
+  );
   const slab = new THREE.Mesh(
     slabGeometry(footprint.points, Math.max(SLAB_DEPTH, deepestGrade)),
     new THREE.MeshStandardMaterial({ color: SLAB_COLOR, roughness: 0.95 }),
@@ -188,6 +196,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
 
     for (const op of openings) {
       const sill = op.sill ?? 0;
+      let control: DoorControl | undefined;
 
       if (op.kind === 'open') {
         // A plain pass-through: framed, but with no leaf to operate.
@@ -200,6 +209,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
         group.add(built.group);
         doors.push(built.control);
         planHiddenGroups.push(built.group);
+        control = built.control;
       }
 
       const annotations = makeDoorAnnotations(op, frame);
@@ -224,6 +234,8 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
         ],
         note: `${WALL_NAMES[op.wall] ?? op.wall} · measured from outside`,
         setHighlight: annotations.setHighlight,
+        activate: control && (() => control.toggle()),
+        actionLabel: control && (() => `Click to ${control.isOpen() ? 'close' : 'open'}`),
       });
     }
   }
@@ -283,6 +295,28 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
         `${built.postCount} posts`,
       ],
       note: mez.note,
+      setHighlight: built.setHighlight,
+    });
+  }
+
+  // Concrete outside the walls: docks and ramps down to grade.
+  for (const work of spec.exterior ?? []) {
+    const built = buildExteriorWork(spec, work);
+    group.add(built.group);
+    hoverTargets.push({
+      mesh: built.hoverMesh,
+      title: work.label,
+      lines: [
+        `${formatFeet(work.width)} × ${formatFeet(work.depth)} · ${Math.round(
+          work.width * work.depth,
+        )} sq ft`,
+        built.fall === 0
+          ? `Level with the interior floor`
+          : `Falls ${formatFeet(Math.abs(built.fall))} · ${built.gradePercent.toFixed(
+              0,
+            )}% grade`,
+      ],
+      note: work.note,
       setHighlight: built.setHighlight,
     });
   }

@@ -43,6 +43,7 @@
         box-shadow: 0 4px 14px rgba(20, 28, 35, 0.3);
       }
       #tooltip .muted { color: #9fadb8; font-size: 11px; }
+      #tooltip .action { color: #ffc978; font-size: 11px; font-weight: 600; }
       #ui .hint { font-size: 11px; color: #7b8792; line-height: 1.5; margin-top: 4px; }
     </style>
   </head>
@@ -54,11 +55,11 @@
       <button id="viewToggle">Switch to plan view</button>
       <div class="section">View from</div>
       <div class="row" id="viewPresets"></div>
-      <div class="section">Doors</div>
-      <div id="doorList"></div>
+      <button id="labelToggle">Hide dimensions and labels</button>
       <div class="hint" id="hint">
         Left-drag: orbit &middot; Right-drag: pan<br />Scroll: zoom
       </div>
+      <div class="hint">Hover anything for dimensions &middot; click a door to open it</div>
     </div>
     <div id="tooltip"></div>
     <script type="module" src="/src/main.ts"></script>

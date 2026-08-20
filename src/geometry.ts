@@ -15,6 +15,35 @@ export interface Rect {
  */
 export type PlanPoint = THREE.Vector2;
 
+/**
+ * Slab height above the exterior grade at a point. The front profile is
+ * piecewise linear along the length and clamped past its end stations; the
+ * grade then ramps front to rear across the building and holds beyond it.
+ */
+export function gradeDropAt(spec: BuildingSpec, x: number, z: number): number {
+  const profile = spec.grade?.front;
+  const rear = spec.grade?.rear ?? 0.5;
+  if (!profile || profile.length === 0) return rear;
+
+  const sorted = [...profile].sort((a, b) => a.x - b.x);
+  let front = sorted[sorted.length - 1].drop;
+  if (x <= sorted[0].x) {
+    front = sorted[0].drop;
+  } else {
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const a = sorted[i];
+      const b = sorted[i + 1];
+      if (x >= a.x && x <= b.x) {
+        front = a.drop + ((b.drop - a.drop) * (x - a.x)) / (b.x - a.x);
+        break;
+      }
+    }
+  }
+
+  const t = Math.max(0, Math.min(1, z / spec.width));
+  return front + (rear - front) * t;
+}
+
 /** Underside of the gable roof at a given z. The ridge runs along X. */
 export function roofHeightAt(spec: BuildingSpec, z: number): number {
   const half = spec.width / 2;

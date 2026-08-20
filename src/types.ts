@@ -128,9 +128,41 @@ export interface BuildingSpec {
   obstructions?: Obstruction[];
   ramps?: Ramp[];
   mezzanines?: Mezzanine[];
+  exterior?: ExteriorWork[];
   /**
-   * How far the slab sits above the exterior grade at the front and rear walls.
-   * The site slopes, so these differ and the ground ramps between them.
+   * How far the slab sits above the exterior grade. The site slopes both ways:
+   * `front` is a profile along the building length, because the grade falls
+   * between the dock end and the bay door, and `rear` is a single value.
    */
-  grade?: { front: number; rear: number };
+  grade?: { front: GradePoint[]; rear: number };
+  /** Gravel yard, in world feet. Everything else outside is dirt. */
+  gravelYard?: { x0: number; x1: number; z0: number; z1: number };
+}
+
+/** Slab height above grade at a station along the building length. */
+export interface GradePoint {
+  x: number;
+  drop: number;
+}
+
+/**
+ * Concrete outside the wall: a flat dock, or a ramp down to grade. One shape
+ * covers both - a wedge whose far edge equals its near edge is just a slab.
+ */
+export interface ExteriorWork {
+  id: string;
+  label: string;
+  note?: string;
+  kind: 'dock' | 'ramp';
+  wall: WallId;
+  fromCorner: CornerRef;
+  offset: number;
+  /** Extent along the wall. */
+  width: number;
+  /** How far it projects away from the wall. */
+  depth: number;
+  /** Surface height at the wall, relative to the slab (0 = level with it). */
+  topAtWall: number;
+  /** Surface height at the far edge. Equal to topAtWall for a flat dock. */
+  topAtFar: number;
 }

@@ -68,9 +68,10 @@
     }
   ],
   "tbd": {
-    "mezzanine": "footprint, deck height, stair location",
-    "frontGrade": "is the apron at the bay door level with the slab?",
-    "cutCorner": "what occupies the cut-out rear-left corner - the adjacent building?"
+    "mezzanineStairs": "stair location and railing; confirm the 6' post spacing",
+    "bayDoorApron": "how is the 24' bay door served at 49\" above grade - a dock, or a ramp?",
+    "rampWidth": "exterior man door ramp width - assumed 6' to match the door",
+    "gravelExtent": "gravel yard extent is indicative"
   },
   "cutouts": [
     {
@@ -81,7 +82,7 @@
       "alongWidth": 13
     }
   ],
-  "gradeComment": "Site slopes: slab stands 49\" above grade at the front wall (the man door and bay door are both at that height) and about 6\" at the rear.",
+  "gradeComment": "Front grade is not level: the slab stands 33\" proud at the dock/ramp end and 49\" at the bay door - the 'slight grade drop' between them. Rear is about 6\". The transition stations (x=51 and x=87) are interpolated, not surveyed.",
   "mezzanines": [
     {
       "id": "mezz-rear-left",
@@ -97,7 +98,58 @@
     }
   ],
   "grade": {
-    "front": 4.0833,
+    "front": [
+      {
+        "x": 0,
+        "drop": 4.0833
+      },
+      {
+        "x": 51,
+        "drop": 4.0833
+      },
+      {
+        "x": 87,
+        "drop": 2.75
+      },
+      {
+        "x": 105,
+        "drop": 2.75
+      }
+    ],
     "rear": 0.5
+  },
+  "exterior": [
+    {
+      "id": "dock-front",
+      "label": "Raised dock",
+      "note": "Concrete, surface level with the interior floor, 33\" above grade",
+      "kind": "dock",
+      "wall": "front",
+      "fromCorner": "left",
+      "offset": 0,
+      "width": 16,
+      "depth": 40,
+      "topAtWall": 0,
+      "topAtFar": 0
+    },
+    {
+      "id": "ramp-man-door",
+      "label": "Man door ramp",
+      "note": "Concrete. Width not dimensioned - taken as the man door's 6'-0\"",
+      "kind": "ramp",
+      "wall": "front",
+      "fromCorner": "left",
+      "offset": 16,
+      "width": 6,
+      "depth": 19,
+      "topAtWall": 0,
+      "topAtFar": -2.75
+    }
+  ],
+  "gravelYard": {
+    "x0": -20,
+    "x1": 125,
+    "z0": -70,
+    "z1": 0
   }
 }
