@@ -137,16 +137,21 @@ export function buildMezzanine(spec: BuildingSpec, mez: Mezzanine): MezzanineBui
     const b = points[(i + 1) % points.length];
     const span = a.distanceTo(b);
     if (span < 1e-9) continue;
-    // Inward normal of a counter-clockwise edge, so each post sits wholly under
-    // the deck with its outer face flush to the edge.
+    // Each post is pulled in half its width two ways: off the edge along the
+    // inward normal, and back along the edge itself. Without the second one a
+    // post at a corner is centred on the corner, so half of it overhangs the
+    // adjoining edge. Clamping both makes the corner posts from the two edges
+    // land on the same point, which the dedupe below then merges.
     const inset = postSize / 2;
-    const nx = (-(b.y - a.y) / span) * inset;
-    const nz = ((b.x - a.x) / span) * inset;
+    const ux = (b.x - a.x) / span;
+    const uz = (b.y - a.y) / span;
+    const nx = -uz * inset;
+    const nz = ux * inset;
     const steps = Math.max(1, Math.round(span / spacing));
     for (let s = 0; s <= steps; s++) {
-      const t = s / steps;
-      const x = a.x + (b.x - a.x) * t + nx;
-      const z = a.y + (b.y - a.y) * t + nz;
+      const along = Math.min(Math.max((s / steps) * span, inset), Math.max(span - inset, inset));
+      const x = a.x + ux * along + nx;
+      const z = a.y + uz * along + nz;
       const key = `${x.toFixed(2)},${z.toFixed(2)}`;
       if (placed.has(key)) continue;
       placed.add(key);
