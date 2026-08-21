@@ -51,32 +51,33 @@
       }
     },
     {
-      "id": "press-brake",
-      "label": "10' press brake",
-      "note": "Bed length is the 10' given. Depth, height and clearances are typical figures, not a spec sheet - say the word and they get trued up.",
-      "width": 10,
-      "length": 8,
-      "height": 10,
+      "id": "manual-brake",
+      "label": "10' manual brake (Baileigh BB-12014)",
+      "note": "Baileigh BB-12014 box-and-pan brake. 10' bend length, but 12'-2\" overall - the frame carries counterweights past each end. 34\" deep, 48\" tall, 3,410 lb. Clearances are still typical figures.",
+      "width": 12.17,
+      "length": 2.83,
+      "height": 4.0,
       "feedAxis": "length",
-      "shape": "machine",
-      "color": "#4a5b6b",
-      "mobility": "fixed",
+      "shape": "brake",
+      "color": "#3f6f5c",
+      "mobility": "rolling",
       "clearance": {
-        "infeed": 8,
+        "infeed": 6,
         "outfeed": 3,
-        "label": "8' operator side for the sheet, 3' behind"
-      }
+        "label": "6' operator side for the sheet, 3' behind for the counterweight swing"
+      },
+      "workingLength": 10
     },
     {
       "id": "hydraulic-shear",
       "label": "12' hydraulic shear",
-      "note": "Bed length is the 12' given. Depth, height and clearances are typical figures, not a spec sheet - say the word and they get trued up.",
+      "note": "Guillotine shear - housing with the blade beam, support table out to the operator, pendant control on a stand. Bed length is the 12' given; depth, height and clearances are typical figures.",
       "width": 12,
-      "length": 8,
+      "length": 6,
       "height": 6,
       "feedAxis": "length",
-      "shape": "machine",
-      "color": "#5b5347",
+      "shape": "shear",
+      "color": "#dfe3e6",
       "mobility": "fixed",
       "clearance": {
         "infeed": 10,

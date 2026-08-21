@@ -130,8 +130,13 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 - **Clearance can be asymmetric.** A saw running long stock needs the same room both
   ways, but a brake or shear needs far more on the operator side than behind, so those
   give `infeed` and `outfeed` separately.
-- **Built: 10' press brake** — 10' bed × 8' deep × 10' tall, 8' operator side / 3' behind.
-- **Built: 12' hydraulic shear** — 12' bed × 8' deep × 6' tall, 10' to load / 5' behind.
+- **Working length is separate from footprint** where they differ — a brake's frame runs
+  wider than its bend length because the counterweights hang off each end.
+- **Built: 10' manual brake (Baileigh BB-12014)** — hand-operated box-and-pan brake for
+  sheet, **12'-2" overall × 2'-10" deep × 4'-0" tall on a 10' bend length**, 6' operator
+  side / 3' behind for the counterweight swing.
+- **Built: 12' hydraulic shear** — guillotine shear, 12' bed × 6' deep × 6' tall, 10' to
+  load / 5' behind. Massed as housing + blade beam + support table + pendant stand.
 - **Built: forklift** — 4' × 12' × 7', drivable, with an operator aboard.
 - **Built: material rack** — parametric cantilever rack. 20' of frame in 5' bays, arms 4'
   apart, 5' deep, 12' tall, with the stored 24' stock drawn on the arms so its 2' overhang

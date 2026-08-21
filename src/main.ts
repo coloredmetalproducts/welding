@@ -261,6 +261,7 @@ function describe(placement: Placement): string {
   return [
     `<strong>${def.label}</strong>`,
     `${formatFeet(def.width)} × ${formatFeet(def.length)} × ${formatFeet(def.height)} tall`,
+    ...(def.workingLength ? [`${formatFeet(def.workingLength)} working length`] : []),
     ...(def.rack ? [`${def.rack.bays} bays · ${def.rack.levels} levels`] : []),
     ...(def.clearance && !def.rack
       ? [`Feeds through the ${formatFeet(feedFootprint(def).along)} side`]

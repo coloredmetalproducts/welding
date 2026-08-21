@@ -267,6 +267,176 @@ function rackBody(item: CatalogItem): THREE.Group {
   return group;
 }
 
+/**
+ * Manual box-and-pan brake. The frame runs wider than the bend length because
+ * the counterweights hang off each end, so the end frames are drawn outboard of
+ * the working span rather than the whole thing being one block.
+ */
+function brakeBody(item: CatalogItem): THREE.Group {
+  const { along, across } = feedFootprint(item);
+  const work = Math.min(item.workingLength ?? across, across);
+  const endZone = Math.max(0.4, (across - work) / 2);
+  const group = new THREE.Group();
+  const paint = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(item.color),
+    roughness: 0.6,
+    metalness: 0.3,
+  });
+  const steel = new THREE.MeshStandardMaterial({
+    color: 0x6d7178,
+    roughness: 0.5,
+    metalness: 0.55,
+  });
+
+  const add = (
+    geometry: THREE.BufferGeometry,
+    material: THREE.Material,
+    x: number,
+    y: number,
+    z = 0,
+  ) => {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    group.add(mesh);
+    group.add(
+      new THREE.LineSegments(
+        new THREE.EdgesGeometry(geometry),
+        new THREE.LineBasicMaterial({ color: OUTLINE_COLOR }),
+      ).translateX(x).translateY(y).translateZ(z),
+    );
+    return mesh;
+  };
+
+  const bedHeight = item.height * 0.68;
+
+  // End frames, outboard of the bend length, carrying the counterweights.
+  for (const sz of [-1, 1]) {
+    const zEnd = sz * (across / 2 - endZone / 2);
+    add(new THREE.BoxGeometry(along * 0.85, item.height, endZone * 0.85), paint, 0, item.height / 2, zEnd);
+    // Counterweight on its arm, swung back behind the frame.
+    add(
+      new THREE.BoxGeometry(along * 0.5, 0.22, 0.22),
+      steel,
+      -along * 0.34,
+      item.height * 0.52,
+      zEnd,
+    );
+    add(
+      new THREE.CylinderGeometry(0.42, 0.42, 0.45, 14).rotateX(Math.PI / 2),
+      steel,
+      -along * 0.55,
+      item.height * 0.52,
+      zEnd,
+    );
+  }
+
+  // Bed, clamping bar with the fingers, and the bending apron at the front.
+  add(new THREE.BoxGeometry(along * 0.8, 0.28, work), paint, 0, bedHeight, 0);
+  add(new THREE.BoxGeometry(along * 0.34, 0.42, work), steel, -along * 0.18, bedHeight + 0.35, 0);
+  add(new THREE.BoxGeometry(along * 0.28, 0.3, work), steel, along * 0.3, bedHeight + 0.05, 0);
+  // Operating handles at each end of the apron.
+  for (const sz of [-1, 1]) {
+    add(
+      new THREE.BoxGeometry(along * 0.7, 0.18, 0.18),
+      steel,
+      along * 0.45,
+      bedHeight + 0.5,
+      sz * work * 0.46,
+    );
+  }
+  return group;
+}
+
+/**
+ * Guillotine shear: a deep housing carrying the blade beam, a low support table
+ * running out to the operator side, and the control pendant on its own stand.
+ * Massed to read like the machine in plan and elevation, not to detail it.
+ */
+function shearBody(item: CatalogItem): THREE.Group {
+  const { along, across } = feedFootprint(item);
+  const group = new THREE.Group();
+  const housing = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(item.color),
+    roughness: 0.5,
+    metalness: 0.2,
+  });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x565c64, roughness: 0.6, metalness: 0.4 });
+  const beam = new THREE.MeshStandardMaterial({ color: 0x2f7cc4, roughness: 0.45, metalness: 0.3 });
+
+  const add = (
+    geometry: THREE.BufferGeometry,
+    material: THREE.Material,
+    x: number,
+    y: number,
+    z = 0,
+  ) => {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    group.add(mesh);
+    group.add(
+      new THREE.LineSegments(
+        new THREE.EdgesGeometry(geometry),
+        new THREE.LineBasicMaterial({ color: OUTLINE_COLOR }),
+      ).translateX(x).translateY(y).translateZ(z),
+    );
+  };
+
+  const bodyDepth = along * 0.6;
+  const bodyX = -along / 2 + bodyDepth / 2;
+  const bedHeight = item.height * 0.45;
+
+  add(new THREE.BoxGeometry(bodyDepth, bedHeight, across), dark, bodyX, bedHeight / 2);
+  add(
+    new THREE.BoxGeometry(bodyDepth, item.height - bedHeight, across),
+    housing,
+    bodyX,
+    bedHeight + (item.height - bedHeight) / 2,
+  );
+  // Blade beam across the front face of the housing.
+  add(
+    new THREE.BoxGeometry(0.3, 0.55, across * 0.97),
+    beam,
+    bodyX + bodyDepth / 2 + 0.1,
+    bedHeight + 0.32,
+  );
+  // Support table running out to the operator.
+  const tableDepth = along - bodyDepth;
+  add(
+    new THREE.BoxGeometry(tableDepth, 0.18, across),
+    dark,
+    along / 2 - tableDepth / 2,
+    bedHeight,
+  );
+  for (const sz of [-0.66, 0, 0.66]) {
+    add(
+      new THREE.BoxGeometry(0.22, bedHeight, 0.22),
+      dark,
+      along / 2 - 0.4,
+      bedHeight / 2,
+      sz * across * 0.5,
+    );
+  }
+  // Control pendant on its stand, at the operator's side.
+  const pendantZ = across / 2 - 0.6;
+  add(
+    new THREE.BoxGeometry(0.22, item.height * 0.6, 0.22),
+    dark,
+    along / 2 - 0.9,
+    item.height * 0.3,
+    pendantZ,
+  );
+  add(
+    new THREE.BoxGeometry(0.35, item.height * 0.3, 0.8),
+    housing,
+    along / 2 - 0.9,
+    item.height * 0.72,
+    pendantZ,
+  );
+  return group;
+}
+
 export function buildPlacement(
   catalog: CatalogItem,
   placed: PlacedItem,
@@ -278,7 +448,11 @@ export function buildPlacement(
       ? forkliftBody(catalog)
       : catalog.shape === 'rack'
         ? rackBody(catalog)
-        : machineBody(catalog);
+        : catalog.shape === 'brake'
+          ? brakeBody(catalog)
+          : catalog.shape === 'shear'
+            ? shearBody(catalog)
+            : machineBody(catalog);
   group.add(body);
 
   const bodyMaterials: THREE.MeshStandardMaterial[] = [];

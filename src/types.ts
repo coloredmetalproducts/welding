@@ -131,8 +131,13 @@ export interface CatalogItem {
    * fed across their short side, so this can't be inferred from the shape.
    */
   feedAxis: 'width' | 'length';
+  /**
+   * Usable span where it differs from the overall footprint - a brake's bend
+   * length is shorter than the frame, which carries the counterweights.
+   */
+  workingLength?: number;
   /** How to mass it in 3D. Defaults to a generic machine block. */
-  shape?: 'machine' | 'forklift' | 'rack';
+  shape?: 'machine' | 'forklift' | 'rack' | 'brake' | 'shear';
   /** Cantilever rack build-up. Bays run along the feed axis, levels up it. */
   rack?: {
     bays: number;
