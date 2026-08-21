@@ -73,6 +73,40 @@ Three of them stand along the rear wall.
 and pitches to the slope, so it climbs the ramps. Or click **Draw path**, click points on the
 floor, and hit **Play** to watch it run the route.
 
+## Saving layouts
+
+There's no server behind this, so layouts live in your own browser — which is what we
+want with two of us using it: each person keeps their own named scenarios and neither
+overwrites the other.
+
+- The arrangement is **saved as you go**, so a refresh picks up where you left off.
+- **Save as…** stores the current arrangement under a name; **Load** brings it back.
+- **Reset** returns to the default arrangement in
+  [`data/layout.json`](data/layout.json), which is what a new browser starts from.
+- **Export** writes a JSON file in exactly that shape. That's how you hand a layout to
+  the other person (they **Import** it), and how a layout becomes the new default —
+  drop the file in as `data/layout.json` and commit it.
+
+The one thing it can't do is show you the other person's saved layouts live; that would
+need a server. Export/Import is the swap.
+
+## Saving layouts
+
+There's no server behind this, so layouts live in your own browser — which is what we
+want with two of us using it: each person keeps their own named scenarios and neither
+overwrites the other.
+
+- The arrangement is **saved as you go**, so a refresh picks up where you left off.
+- **Save as…** stores the current arrangement under a name; **Load** brings it back.
+- **Reset** returns to the default arrangement in
+  [`data/layout.json`](data/layout.json), which is what a new browser starts from.
+- **Export** writes a JSON file in exactly that shape. That's how you hand a layout to
+  the other person (they **Import** it), and how a layout becomes the new default —
+  drop the file in as `data/layout.json` and commit it.
+
+The one thing it can't do is show you the other person's saved layouts live; that would
+need a server. Export/Import is the swap.
+
 **Click a door to open or close it.** In plan view the leaves are hidden and
 each opening shows as an architectural floor symbol: a threshold band, approach lines for
 the overhead door, and swing arcs for the hinged leaves.

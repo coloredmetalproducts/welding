@@ -140,6 +140,10 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 - **Built: 12' hydraulic shear** — guillotine shear, 12' bed × 6' deep × 6' tall, 10' to
   load / 5' behind. Massed as housing + blade beam + support table + pendant stand.
 - **Built: forklift** — 4' × 12' × 7', drivable, with an operator aboard.
+- **Default arrangement** (in `data/layout.json`): racks down the right-end wall and one
+  along the front by the man door, the saw running its 53' cut line across the front bay,
+  the shear on the rear wall and the brake tucked under the mezzanine beside the
+  cinderblock notch.
 - **Built: material rack** — parametric cantilever rack. 20' of frame in 5' bays, arms 4'
   apart, 5' deep, 12' tall, with the stored 24' stock drawn on the arms so its 2' overhang
   past each end of the frame reads. Three placed along the rear wall.
@@ -177,13 +181,21 @@ Starter catalog (dims are typical placeholders — we'll true them up to your ac
 The rack is fully parametric (width / depth / bay count / level count) so we can experiment —
 and stored stock longer than the rack (24' in a 20' rack) renders with visible overhang.
 
-### Phase 4 — Layouts: Save / Load / Compare
+### Phase 4 — Layouts: Save / Load / Compare — *mostly built*
 > *Deliverable: named scenarios we can flip between and keep in git.*
 
-- Save current placement as a named layout; instant switch between layouts.
-- Autosave to localStorage (never lose work on refresh).
-- Export/import layout JSON → commit the good ones to `layouts/` in this repo.
-- "Duplicate layout" to branch an experiment.
+- **Built: named layouts in browser storage.** Only two people use this and there is no
+  server, so per-browser storage is the right answer, not a limitation to work around:
+  each of us keeps our own scenarios and neither overwrites the other.
+- **Built: autosave.** Every drag, rotate and drive writes the working state on a short
+  delay, so a refresh picks up mid-shuffle. The name of the layout you're on persists too.
+- **Built: Export / Import.** Export writes the same shape as `data/layout.json`, so it is
+  both how a layout gets handed to the other person and how one becomes the default
+  everybody starts from — drop it in as `data/layout.json` and commit it.
+- **Built: Reset** back to the committed default.
+- Still to do: side-by-side compare, duplicate-to-branch-an-experiment, and a `layouts/`
+  folder of committed scenarios. Sharing live between the two of us would need a server;
+  Export/Import is the swap until then.
 
 ### Phase 5 — Forklift Path Simulation
 > *Deliverable: draw a path, hit play, watch the forklift (with 24' stock) thread the shop.*

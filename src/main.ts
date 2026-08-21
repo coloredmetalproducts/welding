@@ -9,7 +9,20 @@ import { buildPlacement, feedFootprint, type Placement } from './equipment';
 import { createTravelPath } from './path';
 import catalogData from '../data/catalog.json';
 import layoutData from '../data/layout.json';
-import type { Catalog, Layout } from './types';
+import {
+  cloneItems,
+  deleteLayout,
+  parseFileJson,
+  readSaved,
+  readWorking,
+  readWorkingName,
+  saveLayout,
+  toFileJson,
+  writeWorking,
+  writeWorkingName,
+  type SavedLayouts,
+} from './layouts';
+import type { Catalog, Layout, PlacedItem } from './types';
 import type { BuildingSpec } from './types';
 
 // JSON widens string literals, so the spec shape is asserted at the boundary.
@@ -239,18 +252,11 @@ labelToggle.addEventListener('click', () => {
 // -------------------------------------------------------------- equipment
 const catalog = catalogData as unknown as Catalog;
 const layout = layoutData as unknown as Layout;
-const placements: Placement[] = [];
-
-for (const item of layout.items) {
-  const definition = catalog.items.find((entry) => entry.id === item.catalogId);
-  if (!definition) {
-    console.warn(`Layout references unknown catalog item: ${item.catalogId}`);
-    continue;
-  }
-  const placement = buildPlacement(definition, item, building.site);
-  scene.add(placement.group);
-  placements.push(placement);
-}
+// Equipment is torn down and rebuilt whenever a layout loads, so everything
+// derived from it is mutable. The building's own hover targets are already in
+// the list; equipment is appended after them, so a reload truncates to here.
+let placements: Placement[] = [];
+const buildingTargetCount = building.hoverTargets.length;
 
 const selectionPanel = document.getElementById('selection')!;
 let selected: Placement | null = null;
@@ -289,6 +295,7 @@ function rotateSelected(step: number): void {
   if (!selected) return;
   selected.setRotation(selected.placed.rotation + step);
   selectionPanel.innerHTML = describe(selected);
+  markMoved();
 }
 
 window.addEventListener('keydown', (event) => {
@@ -326,9 +333,10 @@ function driveSelected(dt: number): void {
   const yaw = THREE.MathUtils.degToRad(rotation);
   selected.setPose(item.x + Math.cos(yaw) * step, item.z - Math.sin(yaw) * step, rotation);
   selectionPanel.innerHTML = describe(selected);
+  markMoved();
 }
 
-const forklift = placements.find((p) => p.catalog.mobility === 'driven');
+let forklift: Placement | null = null;
 const travelPath = createTravelPath(building.site);
 scene.add(travelPath.group);
 
@@ -359,7 +367,7 @@ pathDraw.addEventListener('click', () => {
   drawing = !drawing;
   if (drawing) {
     playing = false;
-    select(forklift ?? null);
+    select(forklift);
   }
   refreshPathUi();
 });
@@ -421,23 +429,8 @@ function floorUnderPointer(): THREE.Vector3 | null {
 const tooltip = document.getElementById('tooltip')!;
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
-for (const placement of placements) {
-  building.hoverTargets.push({
-    mesh: placement.hoverMesh,
-    title: placement.catalog.label,
-    lines: [
-      `${formatFeet(placement.catalog.width)} × ${formatFeet(
-        placement.catalog.length,
-      )} × ${formatFeet(placement.catalog.height)} tall`,
-      ...(placement.catalog.clearance ? [placement.catalog.clearance.label] : []),
-    ],
-    note: placement.catalog.note,
-    setHighlight: (on) => placement.setHighlight(on),
-    actionLabel: () => 'Drag to move · R to rotate',
-  });
-}
-const hoverMeshes = building.hoverTargets.map((target) => target.mesh);
-const placementByMesh = new Map(placements.map((p) => [p.hoverMesh, p]));
+let hoverMeshes = building.hoverTargets.map((target) => target.mesh);
+let placementByMesh = new Map<THREE.Object3D, Placement>();
 
 let hovered: HoverTarget | null = null;
 let orbiting = false;
@@ -448,6 +441,180 @@ function clearHover(): void {
   tooltip.style.display = 'none';
   renderer.domElement.style.cursor = 'default';
 }
+
+// ------------------------------------------------------------- saved layouts
+// There is no server here, so layouts live in the browser's own storage: each
+// person keeps their own named scenarios, and Export/Import is how one gets
+// handed to the other (or back into data/layout.json as the new default).
+
+/** Rebuild every machine from a list of placements, replacing what's there. */
+function loadPlacements(items: PlacedItem[]): void {
+  select(null);
+  clearHover();
+  for (const placement of placements) scene.remove(placement.group);
+  building.hoverTargets.length = buildingTargetCount;
+  placements = [];
+
+  for (const item of cloneItems(items)) {
+    const definition = catalog.items.find((entry) => entry.id === item.catalogId);
+    if (!definition) {
+      console.warn(`Layout references unknown catalog item: ${item.catalogId}`);
+      continue;
+    }
+    const placement = buildPlacement(definition, item, building.site);
+    scene.add(placement.group);
+    placements.push(placement);
+    building.hoverTargets.push({
+      mesh: placement.hoverMesh,
+      title: definition.label,
+      lines: [
+        `${formatFeet(definition.width)} × ${formatFeet(definition.length)} × ${formatFeet(
+          definition.height,
+        )} tall`,
+        ...(definition.clearance ? [definition.clearance.label] : []),
+      ],
+      note: definition.note,
+      setHighlight: (on) => placement.setHighlight(on),
+      actionLabel: () => 'Drag to move · R to rotate',
+    });
+  }
+
+  forklift = placements.find((p) => p.catalog.mobility === 'driven') ?? null;
+  hoverMeshes = building.hoverTargets.map((target) => target.mesh);
+  placementByMesh = new Map(placements.map((p) => [p.hoverMesh, p]));
+}
+
+function currentItems(): PlacedItem[] {
+  return placements.map((p) => ({ ...p.placed }));
+}
+
+const layoutList = document.getElementById('layoutList') as HTMLSelectElement;
+const layoutHint = document.getElementById('layoutHint')!;
+const layoutFile = document.getElementById('layoutFile') as HTMLInputElement;
+const layoutSave = document.getElementById('layoutSave') as HTMLButtonElement;
+const layoutLoad = document.getElementById('layoutLoad') as HTMLButtonElement;
+const layoutDelete = document.getElementById('layoutDelete') as HTMLButtonElement;
+const layoutReset = document.getElementById('layoutReset') as HTMLButtonElement;
+const layoutExport = document.getElementById('layoutExport') as HTMLButtonElement;
+const layoutImport = document.getElementById('layoutImport') as HTMLButtonElement;
+
+const DEFAULT_OPTION = '__default__';
+let saved: SavedLayouts = readSaved();
+let currentName = readWorkingName();
+
+// `pick` is what the list should end up showing; without it the user's own
+// selection is left alone, so rebuilding the options never fights them.
+function refreshLayoutUi(message?: string, pick?: string): void {
+  const wanted = pick ?? layoutList.value ?? DEFAULT_OPTION;
+  const names = Object.keys(saved).sort((a, b) => a.localeCompare(b));
+  layoutList.innerHTML = '';
+  const base = document.createElement('option');
+  base.value = DEFAULT_OPTION;
+  base.textContent = `${layout.name} (default)`;
+  layoutList.appendChild(base);
+  for (const name of names) {
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = name;
+    layoutList.appendChild(option);
+  }
+  layoutList.value = wanted !== DEFAULT_OPTION && saved[wanted] ? wanted : DEFAULT_OPTION;
+  const picked = layoutList.value !== DEFAULT_OPTION;
+  layoutLoad.disabled = !picked;
+  layoutDelete.disabled = !picked;
+  layoutHint.textContent =
+    message ??
+    (names.length === 0
+      ? 'Nothing saved yet. Saved layouts stay in this browser.'
+      : `${names.length} saved in this browser${currentName ? ` · on “${currentName}”` : ''}`);
+}
+
+function setCurrentName(name: string): void {
+  currentName = name;
+  writeWorkingName(name);
+}
+
+// Dragging and driving change the arrangement constantly, so the working state
+// is written on a short delay rather than on every frame.
+let saveTimer: number | undefined;
+function markMoved(): void {
+  window.clearTimeout(saveTimer);
+  saveTimer = window.setTimeout(() => writeWorking(currentItems()), 400);
+}
+
+layoutList.addEventListener('change', () => refreshLayoutUi());
+
+layoutSave.addEventListener('click', () => {
+  const suggestion = currentName || `Layout ${Object.keys(saved).length + 1}`;
+  const name = window.prompt('Save this arrangement as:', suggestion)?.trim();
+  if (!name) return;
+  if (saved[name] && !window.confirm(`Replace the saved layout “${name}”?`)) return;
+  saved = saveLayout(name, currentItems());
+  setCurrentName(name);
+  refreshLayoutUi(`Saved “${name}”`, name);
+});
+
+layoutLoad.addEventListener('click', () => {
+  const name = layoutList.value;
+  const items = saved[name];
+  if (!items) return;
+  loadPlacements(items);
+  writeWorking(currentItems());
+  setCurrentName(name);
+  refreshLayoutUi(`Loaded “${name}”`, name);
+});
+
+layoutDelete.addEventListener('click', () => {
+  const name = layoutList.value;
+  if (!saved[name] || !window.confirm(`Delete the saved layout “${name}”?`)) return;
+  saved = deleteLayout(name);
+  if (currentName === name) setCurrentName('');
+  refreshLayoutUi(`Deleted “${name}”`, DEFAULT_OPTION);
+});
+
+layoutReset.addEventListener('click', () => {
+  loadPlacements(layout.items);
+  writeWorking(currentItems());
+  setCurrentName('');
+  refreshLayoutUi('Back to the default arrangement', DEFAULT_OPTION);
+});
+
+layoutExport.addEventListener('click', () => {
+  const name = currentName || layout.name;
+  const blob = new Blob([toFileJson(name, currentItems())], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${name.replace(/[^a-z0-9-_ ]/gi, '').trim() || 'layout'}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+  refreshLayoutUi('Exported — drop it into data/layout.json to change the default');
+});
+
+layoutImport.addEventListener('click', () => layoutFile.click());
+layoutFile.addEventListener('change', async () => {
+  const file = layoutFile.files?.[0];
+  layoutFile.value = '';
+  if (!file) return;
+  const items = parseFileJson(await file.text());
+  if (!items || items.length === 0) {
+    refreshLayoutUi("That file didn't hold a layout");
+    return;
+  }
+  loadPlacements(items);
+  writeWorking(currentItems());
+  setCurrentName('');
+  refreshLayoutUi(`Imported ${items.length} items from ${file.name}`, DEFAULT_OPTION);
+});
+
+// Pick up where this browser left off, so a refresh doesn't undo an afternoon
+// of shuffling; Reset goes back to the arrangement in the repo.
+const working = readWorking();
+loadPlacements(working && working.length > 0 ? working : layout.items);
+refreshLayoutUi(
+  working && working.length > 0 ? 'Restored your last arrangement' : undefined,
+  DEFAULT_OPTION,
+);
 
 function setPointer(event: PointerEvent): void {
   pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -506,6 +673,7 @@ renderer.domElement.addEventListener('pointermove', (event) => {
         snap(hit.z + dragging.offsetZ),
       );
       selectionPanel.innerHTML = describe(dragging.placement);
+      markMoved();
     }
     return;
   }

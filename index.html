@@ -57,6 +57,12 @@
       #selection .warn { color: #b4402a; font-weight: 600; }
       #selection .ok { color: #2f7d5f; font-weight: 600; }
       #ui .hint { font-size: 11px; color: #7b8792; line-height: 1.5; margin-top: 4px; }
+      #ui select {
+        display: block; width: 100%; padding: 7px 8px; margin-bottom: 8px;
+        font-size: 12px; font-family: inherit; color: #26313b;
+        background: #fff; border: 1px solid #b9c3cc; border-radius: 7px;
+      }
+      #ui button:disabled { opacity: 0.45; cursor: default; }
     </style>
   </head>
   <body>
@@ -68,6 +74,22 @@
       <div class="section">View from</div>
       <div class="row" id="viewPresets"></div>
       <button id="labelToggle">Hide dimensions and labels</button>
+      <div class="section">Layout</div>
+      <select id="layoutList"></select>
+      <div class="row">
+        <button id="layoutSave">Save as&hellip;</button>
+        <button id="layoutLoad">Load</button>
+      </div>
+      <div class="row">
+        <button id="layoutDelete">Delete</button>
+        <button id="layoutReset">Reset</button>
+      </div>
+      <div class="row">
+        <button id="layoutExport">Export</button>
+        <button id="layoutImport">Import</button>
+      </div>
+      <div class="hint" id="layoutHint"></div>
+      <input type="file" id="layoutFile" accept="application/json,.json" hidden />
       <div class="section">Forklift path</div>
       <div class="row">
         <button id="pathDraw">Draw path</button>
