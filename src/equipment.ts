@@ -437,6 +437,178 @@ function shearBody(item: CatalogItem): THREE.Group {
   return group;
 }
 
+/**
+ * Marvel Series 81 vertical tilt-frame saw. Material runs along local X, and the
+ * depth splits back to front: motor and hydraulic cabinet at the rear, the tall
+ * band-wheel frame in front of it, and the roller table reaching out to the
+ * operator with the blade dropping through the stock line. Massing only - it
+ * reads as the machine at the right size, it is not the casting.
+ */
+function sawBody(item: CatalogItem): THREE.Group {
+  const { along, across } = feedFootprint(item);
+  const group = new THREE.Group();
+  const paint = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(item.color),
+    roughness: 0.55,
+    metalness: 0.3,
+  });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x434951, roughness: 0.6, metalness: 0.45 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x9aa1a8, roughness: 0.35, metalness: 0.7 });
+  const accent = new THREE.MeshStandardMaterial({ color: 0xd8801f, roughness: 0.5, metalness: 0.15 });
+
+  const add = (
+    geometry: THREE.BufferGeometry,
+    material: THREE.Material,
+    x: number,
+    y: number,
+    z = 0,
+    outline = true,
+  ) => {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    group.add(mesh);
+    // Round parts get no wireframe - the facet edges read as noise at this scale.
+    if (outline) {
+      group.add(
+        new THREE.LineSegments(
+          new THREE.EdgesGeometry(geometry),
+          new THREE.LineBasicMaterial({ color: OUTLINE_COLOR }),
+        ).translateX(x).translateY(y).translateZ(z),
+      );
+    }
+  };
+
+  // Depth runs back to front: motor cabinet, band-wheel frame, table.
+  const motorDepth = across * 0.29;
+  const frameDepth = across * 0.17;
+  const tableDepth = across - motorDepth - frameDepth;
+  const motorZ = across / 2 - motorDepth / 2;
+  const frameZ = across / 2 - motorDepth - frameDepth / 2;
+  const frameFace = frameZ - frameDepth / 2;
+  // Stock rides against the frame, so the cut line sits just off its front face.
+  const stockZ = frameFace - across * 0.115;
+  const tableZ = frameFace - tableDepth / 2;
+  const tableHeight = item.height * 0.36;
+
+  // Motor and hydraulic cabinet across the back.
+  const motorHeight = item.height * 0.6;
+  add(
+    new THREE.BoxGeometry(along * 0.82, motorHeight, motorDepth * 0.88),
+    paint,
+    0,
+    motorHeight / 2,
+    motorZ,
+  );
+
+  // Band-wheel frame: a tall narrow column standing clear of the material path.
+  add(new THREE.BoxGeometry(along * 0.62, item.height, frameDepth), paint, 0, item.height / 2, frameZ);
+  // Both wheels are the same size, so the cutting run is a clean vertical tangent.
+  const wheelR = along * 0.19;
+  const wheelX = -along * 0.16;
+  const upperY = item.height * 0.76;
+  const lowerY = item.height * 0.16;
+  const bladeX = wheelX + wheelR;
+  for (const [wy, r] of [
+    [upperY, wheelR],
+    [lowerY, wheelR],
+  ]) {
+    add(
+      new THREE.CylinderGeometry(r, r, 0.32, 24).rotateX(Math.PI / 2),
+      dark,
+      wheelX,
+      wy,
+      frameFace - 0.16,
+      false,
+    );
+    add(
+      new THREE.CylinderGeometry(r * 0.28, r * 0.28, 0.42, 16).rotateX(Math.PI / 2),
+      steel,
+      wheelX,
+      wy,
+      frameFace - 0.25,
+      false,
+    );
+  }
+  // Maker's roundel at the top of the frame - the orange dot in the photo.
+  add(
+    new THREE.CylinderGeometry(0.3, 0.3, 0.1, 18).rotateX(Math.PI / 2),
+    accent,
+    along * 0.2,
+    item.height * 0.93,
+    frameFace - 0.06,
+    false,
+  );
+
+  // Cutting run of the band, dropping from the top wheel through the stock, with
+  // the guide head just above it.
+  add(
+    new THREE.BoxGeometry(0.1, upperY - tableHeight, 0.42),
+    steel,
+    bladeX,
+    tableHeight + (upperY - tableHeight) / 2,
+    stockZ,
+    false,
+  );
+  add(
+    new THREE.BoxGeometry(0.45, 0.5, frameFace - stockZ + 0.3),
+    dark,
+    bladeX,
+    tableHeight + 1.5,
+    (stockZ + frameFace) / 2,
+  );
+
+  // Table plate on its cabinet, with the roller conveyor carrying the stock line.
+  add(
+    new THREE.BoxGeometry(along * 0.6, tableHeight - 0.2, tableDepth * 0.72),
+    paint,
+    0,
+    (tableHeight - 0.2) / 2,
+    tableZ + tableDepth * 0.1,
+  );
+  const plateDepth = tableDepth * 0.85;
+  const plateZ = frameFace - plateDepth / 2;
+  add(new THREE.BoxGeometry(along * 0.9, 0.2, plateDepth), dark, 0, tableHeight - 0.1, plateZ);
+  // Legs under the outfeed corners, so the plate doesn't read as a floating slab.
+  for (const sx of [-1, 1]) {
+    add(
+      new THREE.BoxGeometry(0.2, tableHeight - 0.2, 0.2),
+      dark,
+      sx * along * 0.4,
+      (tableHeight - 0.2) / 2,
+      plateZ - plateDepth / 2 + 0.25,
+    );
+  }
+  const rollers = Math.max(3, Math.round(along / 0.85));
+  for (let i = 0; i < rollers; i += 1) {
+    add(
+      new THREE.CylinderGeometry(0.13, 0.13, across * 0.19, 12).rotateX(Math.PI / 2),
+      steel,
+      -along * 0.45 + (along * 0.9 * i) / (rollers - 1),
+      tableHeight + 0.13,
+      stockZ,
+      false,
+    );
+  }
+  // Vise jaws gripping the stock either side of the cut.
+  for (const sx of [-1, 1]) {
+    add(
+      new THREE.BoxGeometry(0.4, 0.6, 0.35),
+      dark,
+      bladeX + sx * 0.75,
+      tableHeight + 0.3,
+      stockZ,
+    );
+  }
+
+  // Operator's control panel on a post off the table, clear of the stock line.
+  const panelX = along * 0.3;
+  const panelZ = plateZ - plateDepth * 0.28;
+  add(new THREE.BoxGeometry(0.18, 1.1, 0.18), dark, panelX, tableHeight + 0.55, panelZ);
+  add(new THREE.BoxGeometry(0.4, 0.8, 0.75), dark, panelX, tableHeight + 1.5, panelZ);
+  return group;
+}
+
 export function buildPlacement(
   catalog: CatalogItem,
   placed: PlacedItem,
@@ -446,13 +618,15 @@ export function buildPlacement(
   const body =
     catalog.shape === 'forklift'
       ? forkliftBody(catalog)
-      : catalog.shape === 'rack'
-        ? rackBody(catalog)
-        : catalog.shape === 'brake'
-          ? brakeBody(catalog)
-          : catalog.shape === 'shear'
-            ? shearBody(catalog)
-            : machineBody(catalog);
+      : catalog.shape === 'saw'
+        ? sawBody(catalog)
+        : catalog.shape === 'rack'
+          ? rackBody(catalog)
+          : catalog.shape === 'brake'
+            ? brakeBody(catalog)
+            : catalog.shape === 'shear'
+              ? shearBody(catalog)
+              : machineBody(catalog);
   group.add(body);
 
   const bodyMaterials: THREE.MeshStandardMaterial[] = [];

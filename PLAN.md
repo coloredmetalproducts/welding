@@ -126,7 +126,9 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 - **Feed axis is explicit per machine**, not inferred from the shape — plenty of machines are
   fed across their short side, as the Marvel is.
 - **Built: Marvel Series 81 band saw** — 5' × 8' × 7', fed through the 5' side, 24' clearance
-  each end (a 53' × 8' envelope).
+  each end (a 53' × 8' envelope). Massed off the real machine: motor and hydraulic cabinet at
+  the back, the tall band-wheel frame in front of it, and the roller table reaching out to the
+  operator with the cutting run of the band dropping through the stock line.
 - **Clearance can be asymmetric.** A saw running long stock needs the same room both
   ways, but a brake or shear needs far more on the operator side than behind, so those
   give `infeed` and `outfeed` separately.
@@ -140,7 +142,7 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
 - **Built: forklift** — 4' × 12' × 7', drivable, with an operator aboard.
 - **Built: material rack** — parametric cantilever rack. 20' of frame in 5' bays, arms 4'
   apart, 5' deep, 12' tall, with the stored 24' stock drawn on the arms so its 2' overhang
-  past each end of the frame reads. Two placed along the rear wall.
+  past each end of the frame reads. Three placed along the rear wall.
 
 Still to do: palette to add items, duplicate, delete, per-item clearance halos.
 

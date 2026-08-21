@@ -61,8 +61,13 @@ a dashed working-clearance envelope off its feed axis; it turns red when the cle
 fitting, and the selection panel says why. Equipment lives in
 [`data/catalog.json`](data/catalog.json), placements in [`data/layout.json`](data/layout.json).
 
+Machines are massed off the real thing rather than drawn as blocks — the band saw has its
+motor cabinet, band-wheel frame, roller table and cutting run; the brake its bed, apron and
+outboard counterweights; the shear its housing, blade beam and pendant.
+
 The material racks are parametric: bay count, level count and stock length come from the
 catalog, and the stored stock is drawn on the arms so its overhang past the frame is visible.
+Three of them stand along the rear wall.
 
 **Select the forklift and drive it with the arrow keys** — it follows the surface underneath
 and pitches to the slope, so it climbs the ramps. Or click **Draw path**, click points on the

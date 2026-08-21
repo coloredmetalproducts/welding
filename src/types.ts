@@ -137,7 +137,7 @@ export interface CatalogItem {
    */
   workingLength?: number;
   /** How to mass it in 3D. Defaults to a generic machine block. */
-  shape?: 'machine' | 'forklift' | 'rack' | 'brake' | 'shear';
+  shape?: 'machine' | 'forklift' | 'rack' | 'brake' | 'shear' | 'saw';
   /** Cantilever rack build-up. Bays run along the feed axis, levels up it. */
   rack?: {
     bays: number;

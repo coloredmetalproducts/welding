@@ -27,6 +27,12 @@
       "rotation": 0
     },
     {
+      "catalogId": "material-rack",
+      "x": 46,
+      "z": 47,
+      "rotation": 0
+    },
+    {
       "catalogId": "manual-brake",
       "x": 16,
       "z": 16,
