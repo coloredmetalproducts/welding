@@ -81,6 +81,8 @@ export interface BuildingModel {
   rampFootprints: Rect[];
   /** Headroom is limited under these, but the floor itself is usable. */
   mezzanineFootprints: Rect[];
+  /** Concrete outside the walls - docks and ramps down to grade. */
+  exteriorFootprints: Array<{ label: string; kind: string; rect: Rect }>;
   hoverTargets: HoverTarget[];
   footprint: Footprint;
   walls: WallFrame[];
@@ -174,6 +176,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
   const surfaces: Array<{ rect: Rect; heightAt: (x: number, z: number) => number }> = [];
   const mezzanineFootprints: Rect[] = [];
   const mezzanineZones: Array<{ rect: Rect; clearHeight: number }> = [];
+  const exteriorFootprints: BuildingModel['exteriorFootprints'] = [];
   const hoverTargets: HoverTarget[] = [];
 
   const addFading = (
@@ -336,6 +339,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     const built = buildExteriorWork(spec, work);
     group.add(built.group);
     surfaces.push({ rect: built.footprint, heightAt: built.heightAt });
+    exteriorFootprints.push({ label: work.label, kind: work.kind, rect: built.footprint });
     hoverTargets.push({
       mesh: built.hoverMesh,
       title: work.label,
@@ -418,6 +422,7 @@ export function buildBuilding(spec: BuildingSpec): BuildingModel {
     blockedFootprints,
     rampFootprints,
     mezzanineFootprints,
+    exteriorFootprints,
     hoverTargets,
     footprint,
     walls,

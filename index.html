@@ -63,6 +63,41 @@
         background: #fff; border: 1px solid #b9c3cc; border-radius: 7px;
       }
       #ui button:disabled { opacity: 0.45; cursor: default; }
+      #printOverlay {
+        position: fixed; inset: 0; z-index: 40; display: none;
+        background: #55606a; overflow: auto; padding: 0 0 32px;
+      }
+      #printOverlay.open { display: block; }
+      .print-bar {
+        position: sticky; top: 0; z-index: 2;
+        display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+        padding: 10px 16px; background: rgba(255, 255, 255, 0.96);
+        border-bottom: 1px solid #b9c3cc; font-size: 13px; color: #26313b;
+      }
+      .print-bar label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+      .print-bar .print-scale { color: #6b7680; margin-left: auto; }
+      .print-bar button {
+        padding: 7px 14px; font-size: 13px; font-weight: 600; color: #26313b;
+        background: #eef2f5; border: 1px solid #b9c3cc; border-radius: 7px; cursor: pointer;
+      }
+      .print-bar button#printGo { background: #2c6e9e; border-color: #2c6e9e; color: #fff; }
+      .print-page {
+        margin: 24px auto; width: 17in; max-width: calc(100% - 32px);
+        background: #fff; box-shadow: 0 6px 28px rgba(15, 20, 25, 0.35);
+      }
+      .print-page svg { display: block; width: 100%; height: auto; }
+      /* Printing hands the page over to the sheet alone, at true 11x17. */
+      @media print {
+        body > *:not(#printOverlay) { display: none !important; }
+        #printOverlay {
+          position: static; display: block; background: #fff;
+          overflow: visible; padding: 0;
+        }
+        .print-bar { display: none !important; }
+        .print-page {
+          margin: 0; width: 17in; max-width: none; box-shadow: none;
+        }
+      }
     </style>
   </head>
   <body>
@@ -90,6 +125,7 @@
       </div>
       <div class="hint" id="layoutHint"></div>
       <input type="file" id="layoutFile" accept="application/json,.json" hidden />
+      <button id="printOpen">Print plan (11&times;17)</button>
       <div class="section">Forklift path</div>
       <div class="row">
         <button id="pathDraw">Draw path</button>
@@ -107,6 +143,17 @@
       </div>
     </div>
     <div id="selection"></div>
+    <div id="printOverlay">
+      <div class="print-bar">
+        <strong>Plan sheet</strong>
+        <label><input type="checkbox" id="printEquipment" checked /> Equipment</label>
+        <label><input type="checkbox" id="printExterior" /> Dock &amp; exterior ramp</label>
+        <span class="print-scale" id="printScale"></span>
+        <button id="printGo">Print</button>
+        <button id="printClose">Close</button>
+      </div>
+      <div class="print-page" id="printPage"></div>
+    </div>
     <div id="tooltip"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

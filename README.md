@@ -73,22 +73,20 @@ Three of them stand along the rear wall.
 and pitches to the slope, so it climbs the ramps. Or click **Draw path**, click points on the
 floor, and hit **Play** to watch it run the route.
 
-## Saving layouts
+## Printing
 
-There's no server behind this, so layouts live in your own browser — which is what we
-want with two of us using it: each person keeps their own named scenarios and neither
-overwrites the other.
+**Print plan (11x17)** opens a plan sheet — a real drawing, not a screenshot. It is SVG
+authored in hundredths of an inch at a standard architect's scale, so plotted at 100% on
+tabloid it measures correctly under a scale rule. The sheet carries a 5 ft grid heavy every
+25 ft, a graphic scale bar that stays true even if it does get scaled, dimension strings off
+the front wall, door swing symbols, a title block and a numbered equipment schedule.
 
-- The arrangement is **saved as you go**, so a refresh picks up where you left off.
-- **Save as…** stores the current arrangement under a name; **Load** brings it back.
-- **Reset** returns to the default arrangement in
-  [`data/layout.json`](data/layout.json), which is what a new browser starts from.
-- **Export** writes a JSON file in exactly that shape. That's how you hand a layout to
-  the other person (they **Import** it), and how a layout becomes the new default —
-  drop the file in as `data/layout.json` and commit it.
+Two toggles: **Equipment** off gives the base building only, and **Dock & exterior ramp**
+adds the concrete outside. That second one costs scale — the dock reaches 40' out, so the
+sheet drops from 1/8" = 1'-0" to 1/16" and says so in the title block.
 
-The one thing it can't do is show you the other person's saved layouts live; that would
-need a server. Export/Import is the swap.
+The drawing is generated from the same building model the 3D view is built from, so it
+can't drift from what's on screen.
 
 ## Saving layouts
 

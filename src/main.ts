@@ -7,6 +7,7 @@ import { formatFeet, makeTextSprite } from './labels';
 import { gradeDropAt } from './geometry';
 import { buildPlacement, feedFootprint, type Placement } from './equipment';
 import { createTravelPath } from './path';
+import { buildPlanSheet } from './printsheet';
 import catalogData from '../data/catalog.json';
 import layoutData from '../data/layout.json';
 import {
@@ -622,6 +623,64 @@ refreshLayoutUi(
   working && working.length > 0 ? 'Restored your last arrangement' : undefined,
   DEFAULT_OPTION,
 );
+
+// --------------------------------------------------------------- print sheet
+// The plan sheet is a real drawing, not a screenshot: SVG at an architect's
+// scale, sized for 11x17. It renders into an overlay first so the options can
+// be flipped and checked before anything reaches a printer.
+const printOverlay = document.getElementById('printOverlay')!;
+const printPage = document.getElementById('printPage')!;
+const printScale = document.getElementById('printScale')!;
+const printEquipment = document.getElementById('printEquipment') as HTMLInputElement;
+const printExterior = document.getElementById('printExterior') as HTMLInputElement;
+
+/** @page can only be set globally, so it is injected while the sheet is up. */
+let pageStyle: HTMLStyleElement | null = null;
+
+function renderPrintSheet(): void {
+  const sheet = buildPlanSheet({
+    spec,
+    model: building,
+    catalog,
+    items: currentItems(),
+    layoutName: currentName || layout.name,
+    showEquipment: printEquipment.checked,
+    showExterior: printExterior.checked,
+    dateLabel: new Date().toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }),
+  });
+  printPage.innerHTML = sheet.svg;
+  printScale.textContent = `Scale ${sheet.scaleLabel}`;
+}
+
+function openPrintSheet(): void {
+  renderPrintSheet();
+  printOverlay.classList.add('open');
+  if (!pageStyle) {
+    pageStyle = document.createElement('style');
+    pageStyle.textContent = '@page { size: 17in 11in; margin: 0; }';
+    document.head.appendChild(pageStyle);
+  }
+}
+
+function closePrintSheet(): void {
+  printOverlay.classList.remove('open');
+  printPage.innerHTML = '';
+  pageStyle?.remove();
+  pageStyle = null;
+}
+
+document.getElementById('printOpen')!.addEventListener('click', openPrintSheet);
+document.getElementById('printClose')!.addEventListener('click', closePrintSheet);
+document.getElementById('printGo')!.addEventListener('click', () => window.print());
+printEquipment.addEventListener('change', renderPrintSheet);
+printExterior.addEventListener('change', renderPrintSheet);
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && printOverlay.classList.contains('open')) closePrintSheet();
+});
 
 function setPointer(event: PointerEvent): void {
   pointer.x = (event.clientX / window.innerWidth) * 2 - 1;

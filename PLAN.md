@@ -216,7 +216,14 @@ and stored stock longer than the rack (24' in a 20' rack) renders with visible o
 - Tape-measure tool (click two points → ft-in readout).
 - Aisle/walkway painter — mark keep-clear lanes on the floor; equipment placed on a lane warns.
 - First-person walk mode (eye-level sanity check).
-- One-click screenshot / printable top-down plan with dimensions.
+- **Built: 11x17 plan sheet.** A real drawing rather than a screenshot - SVG authored in
+  hundredths of an inch at a standard architect's scale (1/8" = 1'-0" for the building,
+  dropping automatically when the dock is included), so it measures correctly under a scale
+  rule when plotted at 100%. Carries a 5 ft grid heavy at 25 ft, a graphic scale bar that
+  stays true at any zoom, dimension strings, door swing symbols, a title block and a
+  numbered equipment schedule. Prints with equipment or as the base building only.
+  It reads the same BuildingModel the 3D view is built from, so the drawing cannot drift
+  from the model.
 - Nice-to-haves as demanded: door-approach aprons outside, truck at the door for unloading
   sims, jib-crane swing-radius discs.
 
