@@ -586,8 +586,15 @@ layoutExport.addEventListener('click', () => {
   const link = document.createElement('a');
   link.href = url;
   link.download = `${name.replace(/[^a-z0-9-_ ]/gi, '').trim() || 'layout'}.json`;
+  // Safari - iPads included - ignores a click on a detached anchor, and drops
+  // the download if the blob URL is revoked before it has read it.
+  link.style.display = 'none';
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 2000);
   refreshLayoutUi('Exported — drop it into data/layout.json to change the default');
 });
 
