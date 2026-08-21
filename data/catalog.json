@@ -49,6 +49,40 @@
         "eachEnd": 2,
         "label": "24' stock overhangs 2' each end"
       }
+    },
+    {
+      "id": "press-brake",
+      "label": "10' press brake",
+      "note": "Bed length is the 10' given. Depth, height and clearances are typical figures, not a spec sheet - say the word and they get trued up.",
+      "width": 10,
+      "length": 8,
+      "height": 10,
+      "feedAxis": "length",
+      "shape": "machine",
+      "color": "#4a5b6b",
+      "mobility": "fixed",
+      "clearance": {
+        "infeed": 8,
+        "outfeed": 3,
+        "label": "8' operator side for the sheet, 3' behind"
+      }
+    },
+    {
+      "id": "hydraulic-shear",
+      "label": "12' hydraulic shear",
+      "note": "Bed length is the 12' given. Depth, height and clearances are typical figures, not a spec sheet - say the word and they get trued up.",
+      "width": 12,
+      "length": 8,
+      "height": 6,
+      "feedAxis": "length",
+      "shape": "machine",
+      "color": "#5b5347",
+      "mobility": "fixed",
+      "clearance": {
+        "infeed": 10,
+        "outfeed": 5,
+        "label": "10' to load the sheet, 5' behind for the drop"
+      }
     }
   ]
 }

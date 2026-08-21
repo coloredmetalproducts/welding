@@ -25,6 +25,18 @@
       "x": 72,
       "z": 47,
       "rotation": 0
+    },
+    {
+      "catalogId": "press-brake",
+      "x": 16,
+      "z": 16,
+      "rotation": 0
+    },
+    {
+      "catalogId": "hydraulic-shear",
+      "x": 75,
+      "z": 16,
+      "rotation": 0
     }
   ]
 }

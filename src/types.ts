@@ -143,10 +143,20 @@ export interface CatalogItem {
   color: string;
   mobility: 'fixed' | 'rolling' | 'driven';
   /**
-   * Working clearance the machine needs beyond its own footprint, projected
-   * off each end of the feed axis - the room to run long stock through it.
+   * Working clearance beyond the machine's own footprint, projected along the
+   * feed axis. Use `eachEnd` where it is symmetric, as on a saw running long
+   * stock through; a brake or shear needs far more room on the operator side
+   * than behind, so those give `infeed` and `outfeed` separately.
    */
-  clearance?: { eachEnd: number; label: string };
+  clearance?: {
+    /** Symmetric fallback for both directions. */
+    eachEnd?: number;
+    /** Room where material comes in, extending back along the feed axis. */
+    infeed?: number;
+    /** Room where it leaves, extending forward. */
+    outfeed?: number;
+    label: string;
+  };
 }
 
 /** One placed instance of a catalog item. */

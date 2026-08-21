@@ -30,15 +30,15 @@ export interface Placement {
   check(): string[];
 }
 
-/** Points covering a rectangle, including its edges, for testing floor coverage. */
-function sampleRect(halfX: number, halfZ: number): Array<[number, number]> {
+/** Points covering a box, including its edges, for testing floor coverage. */
+function sampleBox(x0: number, x1: number, z0: number, z1: number): Array<[number, number]> {
   const points: Array<[number, number]> = [];
-  const steps = (half: number) => {
-    const n = Math.max(1, Math.ceil((half * 2) / SAMPLE_STEP));
-    return Array.from({ length: n + 1 }, (_, i) => -half + (half * 2 * i) / n);
+  const steps = (a: number, b: number) => {
+    const n = Math.max(1, Math.ceil(Math.abs(b - a) / SAMPLE_STEP));
+    return Array.from({ length: n + 1 }, (_, i) => a + ((b - a) * i) / n);
   };
-  for (const x of steps(halfX)) {
-    for (const z of steps(halfZ)) points.push([x, z]);
+  for (const x of steps(x0, x1)) {
+    for (const z of steps(z0, z1)) points.push([x, z]);
   }
   return points;
 }
@@ -291,21 +291,25 @@ export function buildPlacement(
   // Working envelope: the footprint stretched along the feed axis by the
   // clearance at each end.
   const feed = feedFootprint(catalog);
-  const reach = catalog.clearance?.eachEnd ?? 0;
-  const halfL = (feed.along + reach * 2) / 2;
+  // Clearance can be lopsided: a shear wants room to load and little behind.
+  const reachIn = catalog.clearance?.infeed ?? catalog.clearance?.eachEnd ?? 0;
+  const reachOut = catalog.clearance?.outfeed ?? catalog.clearance?.eachEnd ?? 0;
+  const envX0 = -feed.along / 2 - reachIn;
+  const envX1 = feed.along / 2 + reachOut;
   const halfW = feed.across / 2;
+  const hasClearance = reachIn > 0 || reachOut > 0;
   const envelopeMaterial = new THREE.LineDashedMaterial({
     color: ENVELOPE_OK,
     dashSize: 1.1,
     gapSize: 0.7,
   });
   let envelope: THREE.Line | undefined;
-  if (reach > 0) {
+  if (hasClearance) {
     const corners = [
-      new THREE.Vector3(-halfL, 0.09, -halfW),
-      new THREE.Vector3(halfL, 0.09, -halfW),
-      new THREE.Vector3(halfL, 0.09, halfW),
-      new THREE.Vector3(-halfL, 0.09, halfW),
+      new THREE.Vector3(envX0, 0.09, -halfW),
+      new THREE.Vector3(envX1, 0.09, -halfW),
+      new THREE.Vector3(envX1, 0.09, halfW),
+      new THREE.Vector3(envX0, 0.09, halfW),
     ];
     envelope = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([...corners, corners[0]]),
@@ -336,8 +340,8 @@ export function buildPlacement(
   hoverMesh.position.y = catalog.height / 2;
   group.add(hoverMesh);
 
-  const bodySamples = sampleRect(feed.along / 2, feed.across / 2);
-  const envelopeSamples = reach > 0 ? sampleRect(halfL, halfW) : [];
+  const bodySamples = sampleBox(-feed.along / 2, feed.along / 2, -halfW, halfW);
+  const envelopeSamples = hasClearance ? sampleBox(envX0, envX1, -halfW, halfW) : [];
   const world = new THREE.Vector3();
 
   const apply = () => {
@@ -398,7 +402,7 @@ export function buildPlacement(
         break;
       }
     }
-    if (reach > 0 && !envelopeClear) {
+    if (hasClearance && !envelopeClear) {
       problems.push(`Working clearance doesn't fit — ${catalog.clearance?.label ?? ''}`);
     }
 

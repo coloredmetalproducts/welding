@@ -127,6 +127,11 @@ arrive — no code changes needed. Placeholders are clearly marked `"TBD": true`
   fed across their short side, as the Marvel is.
 - **Built: Marvel Series 81 band saw** — 5' × 8' × 7', fed through the 5' side, 24' clearance
   each end (a 53' × 8' envelope).
+- **Clearance can be asymmetric.** A saw running long stock needs the same room both
+  ways, but a brake or shear needs far more on the operator side than behind, so those
+  give `infeed` and `outfeed` separately.
+- **Built: 10' press brake** — 10' bed × 8' deep × 10' tall, 8' operator side / 3' behind.
+- **Built: 12' hydraulic shear** — 12' bed × 8' deep × 6' tall, 10' to load / 5' behind.
 - **Built: forklift** — 4' × 12' × 7', drivable, with an operator aboard.
 - **Built: material rack** — parametric cantilever rack. 20' of frame in 5' bays, arms 4'
   apart, 5' deep, 12' tall, with the stored 24' stock drawn on the arms so its 2' overhang
@@ -152,8 +157,8 @@ Starter catalog (dims are typical placeholders — we'll true them up to your ac
 |---|---|---|
 | Welding table | 4' × 8', 36" tall | rolling |
 | Welding machine + cart | 2' × 3' | rolling |
-| Press brake | 12' × 6' | fixed |
-| Shear | 12' × 7' | fixed |
+| **10' press brake** ✅ built | 10' bed × 8' deep × 10' tall, 8'/3' clearance | fixed |
+| **12' hydraulic shear** ✅ built | 12' bed × 8' deep × 6' tall, 10'/5' clearance | fixed |
 | Ironworker | 4' × 4' | fixed |
 | Cutting table (plasma/oxy) | 6' × 12' (placeholder) | fixed |
 | **Marvel Series 81 band saw** ✅ built | 5' × 8' × 7' tall, 24' clearance each end | fixed |
